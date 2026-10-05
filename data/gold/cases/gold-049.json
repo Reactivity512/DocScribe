@@ -1,0 +1,59 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-049",
+  "category": "feature_doc",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "behavior_changed",
+    "new_user_feature"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/QGIS/QGIS-Documentation/pull/7912 (новый алгоритм)",
+    "reference": "Backpressure semantics in streaming API reference"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/streaming.py"
+    ],
+    "summary": "В StreamProcessor добавлен backpressure: max_buffer параметр, при переполнении — BlockTimeout.",
+    "diff": "--- a/demopkg/streaming.py\n+++ b/demopkg/streaming.py\n@@ -8,10 +8,17 @@ class StreamProcessor:\n-    def __init__(self, handler):\n+    def __init__(self, handler, max_buffer: int = 1024):\n         self.handler = handler\n+        self.max_buffer = max_buffer\n         self._queue = deque()\n \n     def push(self, item):\n+        if len(self._queue) >= self.max_buffer:\n+            raise BlockTimeout(f\"buffer full ({self.max_buffer})\")\n         self._queue.append(item)\n",
+    "public_api_impact": "added"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/api-reference.md"
+    ],
+    "target_section": "Streaming / StreamProcessor",
+    "human_written_text": "#### class StreamProcessor(handler, max_buffer=1024)\n\nПакетный обработчик потока событий с backpressure.\n\n| Параметр | Тип | По умолчанию | Описание |\n|---|---|---|---|\n| `handler` | `Callable` | — | Обработчик одного элемента. |\n| `max_buffer` | `int` | `1024` | Максимум элементов в буфере. |\n\n`push()` бросает `BlockTimeout`, когда буфер заполнен, — это сигнал\nпроизводителю снизить темп. Порог настраивается параметром `max_buffer`.\n",
+    "must_include": [
+      "max_buffer",
+      "1024",
+      "BlockTimeout",
+      "backpressure"
+    ],
+    "must_not_include": [
+      "await",
+      "asyncio.Queue",
+      "drop oldest",
+      "бессрочно блокирует"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-06"
+  },
+  "notes": "Uncovered v1.1: perf/backpressure-семантика. Частая ошибка моделей — написать 'блокирует бессрочно' вместо фактического исключения. Кейс также тестирует lang=en.",
+  "raw_patch": null
+}

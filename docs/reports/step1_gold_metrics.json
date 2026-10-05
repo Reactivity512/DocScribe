@@ -1,0 +1,311 @@
+{
+  "n": 44,
+  "counts": {
+    "write_docs": 20,
+    "stay_silent": 19,
+    "escalate_bootstrap": 5
+  },
+  "behavior_accuracy": 0.7955,
+  "confusion": {
+    "escalate_bootstrap->escalate_bootstrap": 5,
+    "stay_silent->stay_silent": 17,
+    "stay_silent->write_docs": 2,
+    "write_docs->stay_silent": 7,
+    "write_docs->write_docs": 13
+  },
+  "binary": {
+    "tp": 13,
+    "fp": 2,
+    "tn": 17,
+    "fn": 7,
+    "precision": 0.8667,
+    "recall_write_docs": 0.65,
+    "fp_rate_negative": 0.0833
+  },
+  "bootstrap_recall": 1.0,
+  "trigger_coverage": 0.3333,
+  "trigger_total": 39,
+  "per_trigger": {
+    "adr_changed": "-gold-012-gold-014",
+    "adr_new": "-gold-011-gold-013-gold-044",
+    "api_new": "+gold-001+gold-005+gold-010-gold-019-gold-043",
+    "api_removed": "+gold-003",
+    "api_signature_changed": "+gold-002-gold-004",
+    "behavior_changed": "+gold-004-gold-009-gold-020-gold-041",
+    "breaking_change": "+gold-002+gold-003+gold-013-gold-020",
+    "config_or_env_changed": "+gold-006+gold-015-gold-017-gold-018",
+    "dependency_added": "-gold-005-gold-011-gold-012-gold-014+gold-015-gold-018-gold-040",
+    "new_user_feature": "-gold-007+gold-008-gold-009-gold-010-gold-016-gold-019-gold-042"
+  },
+  "target_coverage": 0.3103,
+  "target_total": 29,
+  "target_misses": {
+    "adr": [
+      "gold-011",
+      "gold-012",
+      "gold-013",
+      "gold-014",
+      "gold-044"
+    ],
+    "api-reference": [
+      "gold-004"
+    ],
+    "changelog": [
+      "gold-041"
+    ],
+    "guide": [
+      "gold-003",
+      "gold-005",
+      "gold-006",
+      "gold-007",
+      "gold-009",
+      "gold-010",
+      "gold-018",
+      "gold-042"
+    ],
+    "readme": [
+      "gold-016",
+      "gold-019",
+      "gold-020",
+      "gold-040",
+      "gold-044"
+    ]
+  },
+  "severity_agreement": 0.56,
+  "errors": [
+    {
+      "id": "gold-009",
+      "category": "feature_doc",
+      "expected": "write_docs",
+      "got": "stay_silent",
+      "exp_triggers": [
+        "new_user_feature",
+        "behavior_changed"
+      ],
+      "got_triggers": [],
+      "ignore": [
+        "internal_refactor"
+      ],
+      "rules": [
+        "R-ignore-refactor"
+      ],
+      "exp_targets": [
+        "guide"
+      ],
+      "got_targets": [],
+      "needs_llm": true,
+      "evidence": [
+        "[R-ignore-refactor] публичный API не изменился; внутренние токены +/-: ['False', '__enter__', '__exit__', 'close', 'connect', 'def'] / []"
+      ]
+    },
+    {
+      "id": "gold-014",
+      "category": "adr_impact",
+      "expected": "write_docs",
+      "got": "stay_silent",
+      "exp_triggers": [
+        "adr_changed",
+        "dependency_added"
+      ],
+      "got_triggers": [],
+      "ignore": [
+        "no_public_api_impact"
+      ],
+      "rules": [
+        "R-default-silent"
+      ],
+      "exp_targets": [
+        "adr"
+      ],
+      "got_targets": [],
+      "needs_llm": false,
+      "evidence": []
+    },
+    {
+      "id": "gold-016",
+      "category": "readme_update",
+      "expected": "write_docs",
+      "got": "stay_silent",
+      "exp_triggers": [
+        "new_user_feature"
+      ],
+      "got_triggers": [],
+      "ignore": [
+        "internal_refactor"
+      ],
+      "rules": [
+        "R-ignore-refactor"
+      ],
+      "exp_targets": [
+        "readme"
+      ],
+      "got_targets": [],
+      "needs_llm": true,
+      "evidence": [
+        "[R-ignore-refactor] публичный API не изменился; внутренние токены +/-: ['Client', '__version__', 'as', 'export_to_csv', 'export_to_parquet', 'exporters'] / []"
+      ]
+    },
+    {
+      "id": "gold-017",
+      "category": "readme_update",
+      "expected": "write_docs",
+      "got": "stay_silent",
+      "exp_triggers": [
+        "config_or_env_changed"
+      ],
+      "got_triggers": [],
+      "ignore": [
+        "docs_only",
+        "typo_only"
+      ],
+      "rules": [
+        "R-ignore-docs-only",
+        "R-ignore-typo"
+      ],
+      "exp_targets": [
+        "readme"
+      ],
+      "got_targets": [
+        "readme"
+      ],
+      "needs_llm": false,
+      "evidence": [
+        "[R-ignore-docs-only] изменена только документация — источник истины уже обновлён человеком",
+        "[R-ignore-typo] изменено строк: 4, новых слов: 0"
+      ]
+    },
+    {
+      "id": "gold-018",
+      "category": "readme_update",
+      "expected": "write_docs",
+      "got": "stay_silent",
+      "exp_triggers": [
+        "dependency_added",
+        "config_or_env_changed"
+      ],
+      "got_triggers": [],
+      "ignore": [
+        "no_public_api_impact"
+      ],
+      "rules": [
+        "R-default-silent"
+      ],
+      "exp_targets": [
+        "guide"
+      ],
+      "got_targets": [],
+      "needs_llm": false,
+      "evidence": []
+    },
+    {
+      "id": "gold-019",
+      "category": "readme_update",
+      "expected": "write_docs",
+      "got": "stay_silent",
+      "exp_triggers": [
+        "new_user_feature",
+        "api_new"
+      ],
+      "got_triggers": [],
+      "ignore": [
+        "docs_only"
+      ],
+      "rules": [
+        "R-ignore-docs-only"
+      ],
+      "exp_targets": [
+        "readme"
+      ],
+      "got_targets": [
+        "changelog"
+      ],
+      "needs_llm": false,
+      "evidence": [
+        "[R-ignore-docs-only] изменена только документация — источник истины уже обновлён человеком"
+      ]
+    },
+    {
+      "id": "gold-020",
+      "category": "readme_update",
+      "expected": "write_docs",
+      "got": "stay_silent",
+      "exp_triggers": [
+        "behavior_changed",
+        "breaking_change"
+      ],
+      "got_triggers": [],
+      "ignore": [
+        "docs_only",
+        "typo_only"
+      ],
+      "rules": [
+        "R-ignore-docs-only",
+        "R-ignore-typo"
+      ],
+      "exp_targets": [
+        "readme"
+      ],
+      "got_targets": [
+        "guide"
+      ],
+      "needs_llm": false,
+      "evidence": [
+        "[R-ignore-docs-only] изменена только документация — источник истины уже обновлён человеком",
+        "[R-ignore-typo] изменено строк: 2, новых слов: 0"
+      ]
+    },
+    {
+      "id": "gold-026",
+      "category": "internal_refactor",
+      "expected": "stay_silent",
+      "got": "write_docs",
+      "exp_triggers": [
+        "none"
+      ],
+      "got_triggers": [
+        "api_removed",
+        "api_signature_changed",
+        "breaking_change"
+      ],
+      "ignore": [],
+      "rules": [
+        "R-api-changed",
+        "R-api-removed"
+      ],
+      "exp_targets": [],
+      "got_targets": [
+        "api-reference"
+      ],
+      "needs_llm": true,
+      "evidence": [
+        "[R-api-changed] def export_to_csv(df, path, sep=',') → def export_to_csv(df: pd.DataFrame, path: str, sep: str=',') -> None | annotation_changed: ['df', 'path',",
+        "[R-api-changed] def fetch_records(self, endpoint, timeout, limit=100) → def fetch_records(self, endpoint: str, timeout: float, limit: int=100) -> list[dict] | a",
+        "[R-api-removed] удалён: def fetch_records(self, endpoint, timeout, limit=100): | BREAKING: публичный символ удалён (detected by text fallback)"
+      ]
+    },
+    {
+      "id": "gold-031",
+      "category": "ci_test_only",
+      "expected": "stay_silent",
+      "got": "write_docs",
+      "exp_triggers": [
+        "none"
+      ],
+      "got_triggers": [
+        "dependency_added"
+      ],
+      "ignore": [],
+      "rules": [
+        "R-deps"
+      ],
+      "exp_targets": [],
+      "got_targets": [
+        "readme"
+      ],
+      "needs_llm": false,
+      "evidence": [
+        "[R-deps] новые зависимости: ['-', 'fail-under', 'source']"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-046",
+  "category": "api_change",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "api_removed",
+    "breaking_change"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/QGIS/QGIS-Documentation/pull/7887 (обновление раздела)",
+    "reference": "Удаление API из reference с инструкцией миграции"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/exporters.py"
+    ],
+    "summary": "Удалена публичная функция export_to_orc(); в __all__ её больше нет.",
+    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -30,15 +30,6 @@ def export_to_parquet(df, path, compression=\"snappy\"):\n     df.to_parquet(path, compression=compression)\n \n \n-def export_to_orc(df, path):\n-    \"\"\"Сохранить DataFrame в формате ORC (deprecated с 0.4).\"\"\"\n-    warnings.warn(\"export_to_orc is deprecated, use export_to_parquet\",\n-                  DeprecationWarning, stacklevel=2)\n-    df.to_parquet(path)\n-\n-\n-__all__ = [\"export_to_csv\", \"export_to_parquet\", \"export_to_orc\"]\n+__all__ = [\"export_to_csv\", \"export_to_parquet\"]\n",
+    "public_api_impact": "removed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/api-reference.md"
+    ],
+    "target_section": "Exporters / export_to_orc (removed)",
+    "human_written_text": "~~export_to_orc~~ — **удалено в версии 0.6.**\n\nФункция выгрузки в ORC удалена из публичного API. Используйте\n`export_to_parquet(df, path)` — Parquet покрывает тот же сценарий\nколоночного хранения. Миграция:\n\n```python\n# было\nexport_to_orc(df, \"out.orc\")\n# стало\nexport_to_parquet(df, \"out.parquet\")\n```\n",
+    "must_include": [
+      "удалено",
+      "export_to_parquet",
+      "0.6"
+    ],
+    "must_not_include": [
+      "все еще доступна",
+      "deprecated но работает",
+      "export_to_avro"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-06"
+  },
+  "notes": "Uncovered v1.1: полное удаление публичной функции (не signature change). Документация должна быть помечена как removed, а не просто удалена молча.",
+  "raw_patch": null
+}

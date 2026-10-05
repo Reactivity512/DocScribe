@@ -1,0 +1,58 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-054",
+  "category": "api_change",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "api_new",
+    "dependency_added"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/QGIS/QGIS-Documentation/pull/7912",
+    "reference": "Mixed PR: human docs already updated in same PR"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/vector.py",
+      "pyproject.toml",
+      "docs/api-reference.md"
+    ],
+    "summary": "Добавлен VectorSearch + зависимость numpy; человек УЖЕ обновил docs/api-reference.md в этом же PR.",
+    "diff": "--- /dev/null\n+++ b/demopkg/vector.py\n@@ -0,0 +1,14 @@\n+import numpy as np\n+\n+\n+def cosine_similarity(a, b):\n+    \"\"\"Косинусное сходство двух векторов одинаковой длины.\"\"\"\n+    va, vb = np.asarray(a, dtype=float), np.asarray(b, dtype=float)\n+    return float(va @ vb / (np.linalg.norm(va) * np.linalg.norm(vb)))\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -18,3 +18,4 @@ dependencies = [\n     \"pandas>=2.0\",\n+    \"numpy>=1.26\",\n ]\n--- a/docs/api-reference.md\n+++ b/docs/api-reference.md\n@@ -55,3 +55,12 @@ See Exporters above.\n+\n+### VectorSearch\n+\n+#### cosine_similarity(a, b)\n+\n+Косинусное сходство двух векторов одинаковой длины. Возвращает float.\n+Зависимость: `numpy>=1.26`.\n",
+    "public_api_impact": "added"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/api-reference.md"
+    ],
+    "target_section": "VectorSearch / cosine_similarity (cross-check)",
+    "human_written_text": "Кросс-чек человеческой документации в том же PR: секция\n`cosine_similarity(a, b)` уже содержит сигнатуру, описание и версию\nnumpy>=1.26 — агент должен сверить текст против кода и не дублировать секцию.\n",
+    "must_include": [
+      "cosine_similarity",
+      "numpy"
+    ],
+    "must_not_include": [
+      "дублирование секции",
+      "европейское расстояние"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "multi_file",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-06"
+  },
+  "notes": "Uncovered v1.1: mixed PR (код + человек обновил доки). Ожидаем write_docs НЕ как создание новой секции, а как верификацию/дополнение; ключевой антипаттерн — дубль секции.",
+  "raw_patch": null
+}

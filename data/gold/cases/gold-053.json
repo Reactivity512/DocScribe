@@ -1,0 +1,56 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-053",
+  "category": "bootstrap",
+  "expected_behavior": "escalate_bootstrap",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "bootstrap_scan",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Bootstrap Stage 0 on empty-docs repo"
+  },
+  "code_change": {
+    "files": [
+      "git_log: last 1 commit",
+      "repo state: no docs/, no README"
+    ],
+    "summary": "Первый запуск: в репозитории нет ни docs/, ни README; bootstrap Stage 0 (скан структуры).",
+    "diff": "(no diff — initial repository scan)\nrepo tree:\n  pyproject.toml\n  src/pkg/__init__.py\n  src/pkg/core.py\n  src/pkg/utils.py\n  tests/test_core.py\n",
+    "public_api_impact": "none"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/BOOTSTRAP_STAGE_0.md"
+    ],
+    "target_section": "Stage 0: inventory of modules and public symbols",
+    "human_written_text": "Stage 0 (inventory, детерминированный скан, без LLM): список модулей pkg.core, pkg.utils, публичных символов и зависимостей из pyproject.toml; план генерации README/docs на следующих стейджах.\n",
+    "must_include": [
+      "pkg.core",
+      "pkg.utils",
+      "inventory"
+    ],
+    "must_not_include": [
+      "markdown-текст README",
+      "готовый API reference"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-06"
+  },
+  "notes": "Uncovered v1.1: Stage 0 для пустого репозитория (без docs/ и README). Отличие от gold-040..044: там partial-docs, здесь полный ноль — different code path.",
+  "raw_patch": null
+}

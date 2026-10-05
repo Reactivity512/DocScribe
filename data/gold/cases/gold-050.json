@@ -1,0 +1,57 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-050",
+  "category": "readme_update",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "config_or_env_changed",
+    "breaking_change"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/tensorflow/docs (PR #128355)",
+    "reference": "Required environment variables migration note"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/settings.py",
+      ".env.example"
+    ],
+    "summary": "RETRY_BACKOFF стал обязательным (без дефолта), добавлен обязательный SERVICE_REGION.",
+    "diff": "--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -10,7 +10,9 @@ class Settings(BaseSettings):\n     api_timeout: int = 30\n-    retry_backoff: float = 1.0\n+    retry_backoff: float\n+    service_region: str\n+\n+    model_config = SettingsConfigDict(env_file=\".env\")\n--- a/.env.example\n+++ b/.env.example\n@@ -1,3 +1,5 @@\n DEMO_API_TOKEN=\n API_TIMEOUT=30\n-RETRY_BACKOFF=1.0\n+RETRY_BACKOFF=          # required, seconds\n+SERVICE_REGION=         # required, e.g. eu-west-1\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "README.md"
+    ],
+    "target_section": "Конфигурация / Переменные окружения",
+    "human_written_text": "### Переменные окружения\n\n| Переменная | Обязательная | По умолчанию | Описание |\n|---|---|---|---|\n| `RETRY_BACKOFF` | **да** (с 0.6) | — | Базовая задержка повторов, сек. Дефолт `1.0` удалён. |\n| `SERVICE_REGION` | **да** (новая) | — | Регион сервиса, напр. `eu-west-1`. |\n| `API_TIMEOUT` | нет | `30` | Таймаут запроса, сек. |\n\nОбновите `.env` перед апгрейдом: отсутствие обязательных переменных\nприведёт к ошибке валидации при старте.\n",
+    "must_include": [
+      "RETRY_BACKOFF",
+      "SERVICE_REGION",
+      "обязательн"
+    ],
+    "must_not_include": [
+      "по умолчанию 1.0",
+      "опциональная"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "breaking"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-06"
+  },
+  "notes": "Uncovered v1.1: конфиг-брейнинг без изменения публичных сигнатур; сигнал — .env.example + аннотации без дефолтов.",
+  "raw_patch": null
+}

@@ -1,0 +1,46 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-051",
+  "category": "internal_refactor",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "low",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "—",
+    "reference": "Internal refactor with misleading keyword in comment"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/pipeline.py"
+    ],
+    "summary": "Извлечён приватный _apply_stage; публичные методы те же. В коде осталось слово 'public API' в комментарии.",
+    "diff": "--- a/demopkg/pipeline.py\n+++ b/demopkg/pipeline.py\n@@ -40,12 +40,16 @@ class Pipeline:\n     def run(self, data):\n-        for stage in self.stages:\n-            data = stage.apply(data)\n+        return self._apply_stages(data)\n+\n+    def _apply_stages(self, data):\n+        # helper for the public API surface (run/astage)\n+        for stage in self.stages:\n+            data = stage.apply(data)\n         return data\n",
+    "public_api_impact": "none"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-06"
+  },
+  "notes": "Uncovered negative v1.1: содержит маркер 'public API' в комментарии — проверка, что comment-only шум не вызывает R-ignore-refactor в обход анализа и не триггерит write_docs.",
+  "raw_patch": null
+}

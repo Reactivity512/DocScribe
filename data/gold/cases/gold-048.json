@@ -1,0 +1,58 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-048",
+  "category": "feature_doc",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "behavior_changed",
+    "breaking_change"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/tensorflow/docs (PR #128320: исправления в reference)",
+    "reference": "Обязательная аутентификация: обновление руководства"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/client.py"
+    ],
+    "summary": "DemoClient теперь бросает AuthError при пустом токене вместо анонимных запросов.",
+    "diff": "--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -22,8 +22,12 @@ class DemoClient:\n     def __init__(self, base_url, token=None):\n         self.base_url = base_url.rstrip(\"/\")\n-        self.token = token\n+        self.token = token or os.environ.get(\"DEMO_API_TOKEN\")\n+        if not self.token:\n+            raise AuthError(\n+                \"Token is required: pass token= or set DEMO_API_TOKEN\"\n+            )\n \n     def get(self, path):\n-        headers = {}\n+        headers = {\"Authorization\": f\"Bearer {self.token}\"}\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/guide/inference.md"
+    ],
+    "target_section": "Аутентификация клиента",
+    "human_written_text": "С версии 0.6 `DemoClient` **требует токен**: конструктор бросает\n`AuthError`, если токен не передан явно и переменная окружения\n`DEMO_API_TOKEN` не установлена. Анонимные запросы больше не поддерживаются.\n\n```python\nclient = DemoClient(\"https://api.demo.dev\", token=\"...\")\n# или\nos.environ[\"DEMO_API_TOKEN\"] = \"...\"\nclient = DemoClient(\"https://api.demo.dev\")\n```\n",
+    "must_include": [
+      "AuthError",
+      "DEMO_API_TOKEN",
+      "требует токен"
+    ],
+    "must_not_include": [
+      "анонимны",
+      "опциональн",
+      "warning"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "breaking",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-06"
+  },
+  "notes": "Uncovered v1.1: security/auth-поведение без изменения сигнатур — ловится только текстовыми сигналами (raise, env-var), AST-API-diff тут молчит.",
+  "raw_patch": null
+}
