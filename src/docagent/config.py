@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     api_key: str = "not-needed"
     llm_timeout_s: float = 120.0
     temperature: float = 0.1
-    max_tokens: int = 700
+    max_tokens: int = 900  # 700 обрезал JSON у qwen2.5-coder:3b на больших черновиках
 
     docs_lang: str = "ru"  # ru | en
 
