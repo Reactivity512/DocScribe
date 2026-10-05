@@ -1,0 +1,58 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-047",
+  "category": "readme_update",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "behavior_changed",
+    "breaking_change"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/QGIS/QGIS-Documentation/pull/7934 (обновление руководства)",
+    "reference": "Смена CLI-фреймворка: обновление раздела использования"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/cli.py",
+      "demopkg/settings.py"
+    ],
+    "summary": "CLI демо перенесён с argparse на click: меняется способ вызова и имя entrypoint.",
+    "diff": "--- a/demopkg/cli.py\n+++ b/demopkg/cli.py\n@@ -1,24 +1,18 @@\n-import argparse\n+import click\n \n \n-def main():\n-    parser = argparse.ArgumentParser(prog=\"demo\")\n-    parser.add_argument(\"--input\", required=True)\n-    parser.add_argument(\"--output\", default=\"out.json\")\n-    args = parser.parse_args()\n-    run(args.input, args.output)\n-\n-\n-if __name__ == \"__main__\":\n-    main()\n+@click.command()\n+@click.option(\"--input\", \"input_path\", required=True, help=\"Путь к входному файлу\")\n+@click.option(\"--output\", default=\"out.json\", help=\"Путь к результату\")\n+def main(input_path: str, output: str) -> None:\n+    \"\"\"Запустить обработку данных демки.\"\"\"\n+    run(input_path, output)\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -18,4 +18,5 @@ dependencies = [\n     \"pandas>=2.0\",\n+    \"click>=8.1\",\n ]\n \n [project.scripts]\n-demo = \"demopkg.cli:main\"\n+demo = \"demopkg.cli:main\"\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "README.md"
+    ],
+    "target_section": "Использование / CLI",
+    "human_written_text": "### CLI\n\nИнтерфейс командной строки построен на `click` (с версии 0.6):\n\n```bash\ndemo --input data.csv --output result.json\n```\n\n| Опция | Обязательная | По умолчанию | Описание |\n|---|---|---|---|\n| `--input` | да | — | Путь к входному файлу. |\n| `--output` | нет | `out.json` | Путь к результату. |\n",
+    "must_include": [
+      "click",
+      "--input",
+      "--output"
+    ],
+    "must_not_include": [
+      "argparse",
+      "positional",
+      "subcommand"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-06"
+  },
+  "notes": "Uncovered v1.1: миграция фреймворка CLI. Триггеры: dependency_added неявно (в exp-list не включали, т.к. главный сигнал — смена поведения вызова). Ожидается обновление README, не API-ref.",
+  "raw_patch": null
+}

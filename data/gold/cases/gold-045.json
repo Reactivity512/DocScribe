@@ -1,0 +1,59 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-045",
+  "category": "feature_doc",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "new_user_feature",
+    "api_new"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/tensorflow/docs (PR #128355: добавление новых примеров)",
+    "reference": "Новый механизм аутентификации в справочнике API"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/auth.py"
+    ],
+    "summary": "Добавлен класс APITokenAuth — аутентификация по Bearer-токенам.",
+    "diff": "--- /dev/null\n+++ b/demopkg/auth.py\n@@ -0,0 +1,22 @@\n+\"\"\"Токенная аутентификация для DemoClient.\"\"\"\n+from __future__ import annotations\n+\n+import os\n+\n+\n+class APITokenAuth:\n+    \"\"\"Аутентификация по статическому Bearer-токену.\n+\n+    Args:\n+        token: Bearer-токен. Если не передан, читается из env DEMO_API_TOKEN.\n+    \"\"\"\n+\n+    def __init__(self, token: str | None = None):\n+        self._token = token or os.environ.get(\"DEMO_API_TOKEN\", \"\")\n+\n+    def headers(self) -> dict[str, str]:\n+        return {\"Authorization\": f\"Bearer {self._token}\"}\n+\n+\n+__all__ = [\"APITokenAuth\"]\n",
+    "public_api_impact": "added"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/api-reference.md"
+    ],
+    "target_section": "Auth / APITokenAuth",
+    "human_written_text": "#### class APITokenAuth(token=None)\n\nАутентификация `DemoClient` по статическому Bearer-токену.\n\n| Параметр | Тип | По умолчанию | Описание |\n|---|---|---|---|\n| `token` | `str` или `None` | `None` | Bearer-токен; при `None` берётся из переменной окружения `DEMO_API_TOKEN`. |\n\nМетод `headers()` возвращает заголовок `Authorization: Bearer <token>`.\n\n```python\nfrom demopkg.auth import APITokenAuth\nauth = APITokenAuth()  # токен из DEMO_API_TOKEN\n```\n",
+    "must_include": [
+      "APITokenAuth",
+      "Bearer",
+      "DEMO_API_TOKEN",
+      "headers"
+    ],
+    "must_not_include": [
+      "OAuth2",
+      "refresh_token",
+      "APIKeyAuth",
+      "JWT"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-06"
+  },
+  "notes": "Новый auth-механизм: частая галлюцинация малых моделей — подмешивание OAuth2/JWT вместо фактического API.",
+  "raw_patch": null
+}

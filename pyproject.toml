@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "docagent"
+version = "0.1.0"
+description = "DocAgent: MCP-сервер + агент документации с HITL через GitHub PR"
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp>=2.2",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.2",
+    "openai>=1.30",
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+docagent-mcp = "docagent.mcp_server.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
