@@ -2,7 +2,7 @@
   "metrics": {
     "backend": "fake",
     "n_write_docs_cases": 27,
-    "seconds": 0.9,
+    "seconds": 0.8,
     "silently_skipped_by_rules": 7,
     "drafts_produced_rate": 1.0,
     "hallucination_free_rate": 1.0,

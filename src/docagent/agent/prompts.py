@@ -35,11 +35,15 @@ HARD RULES:
 {{"target": "{target}", "action": "create|append|update|remove", "file_path": "...", \
 "anchor": "exact section heading or null", "content_md": "markdown text", \
 "rationale": "one sentence why", "confidence": 0.0-1.0, "cited_symbols": ["..."]}}
-3. NEVER invent API names. Use ONLY identifiers from the ALLOWED_SYMBOLS list and the diff. \
-If you cite an identifier not present there, your answer is invalid.
+3. NEVER invent API names. Cite ONLY identifiers from the ALLOWED_SYMBOLS list. \
+Never write dotted module paths (like pkg.module.func) — use the bare name from ALLOWED_SYMBOLS. \
+If you cite an identifier not in that list, your answer is rejected.
 4. content_md must be self-contained, factual, <= {max_words} words, matching the diff evidence only.
 5. {lang_rule}
-6. If nothing meaningful can be written from the evidence, return:
+6. anchor rules: for action "append"/"update" set anchor to an existing heading of the target file \
+(copy it exactly from CURRENT DOC SECTION); if the file has no sections yet or action is "create", \
+set anchor to null. Never put markdown fences inside anchor.
+7. If nothing meaningful can be written from the evidence, return:
 {{"skipped_reason": "..."}}
 
 EXAMPLE reply:
@@ -67,8 +71,8 @@ def build_user_prompt(
     lang: str,
 ) -> str:
     """Пользовательская часть: контекст с помеченными строками (стабильно парсится и fake-бэкендом)."""
-    ev_lines = [f"- {e.file}" + (f" ({e.symbol})" if e.symbol else "") + f": {e.detail}"
-               for e in decision.evidence[:8]]
+    ev_lines = [f"- {e.file}" + (f" ({e.symbol.split('.')[-1]})" if e.symbol else "") + f": {e.detail}"
+                for e in decision.evidence[:8]]
     parts = [
         f"TARGET: {target.value}",
         f"FILE_PATH: {TARGET_FILE_HINT.get(target, 'docs/notes.md')}",

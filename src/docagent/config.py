@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     api_key: str = "not-needed"
     llm_timeout_s: float = 120.0
     temperature: float = 0.1
+    max_tokens: int = 700
 
     docs_lang: str = "ru"  # ru | en
 
