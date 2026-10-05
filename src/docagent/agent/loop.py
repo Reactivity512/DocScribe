@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass, field
 
@@ -26,6 +27,10 @@ from docagent.agent.schemas import DocDraft, parse_llm_json, validate_draft
 from docagent.config import Settings, get_settings
 from docagent.mcp_server import service
 from docagent.mcp_server.models import DocsDecision, ExpectedDocsTarget
+
+# имена, объявленные в добавленных строках диффа (def/class/async def и ключевые аргументы)
+_ADDED_IDENT_RE = re.compile(
+    r"^\+\s*(?:async\s+)?(?:def|class)\s+([A-Za-z_][A-Za-z0-9_]*)", re.M)
 
 
 @dataclass
@@ -75,6 +80,9 @@ class ToolProvider:
             names.append(r.symbol.split(".")[-1])
         names.extend(analysis.dependencies_added)
         names.extend(analysis.env_vars_touched)
+        # fallback для пустых/новых репозиториев: всё, что добавлено в диффе (def/class/signature)
+        for m in _ADDED_IDENT_RE.finditer(diff_text):
+            names.append(m.group(1))
         # детерминированный порядок, без дублей
         seen, out = set(), []
         for n in names:

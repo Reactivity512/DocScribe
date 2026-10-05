@@ -34,7 +34,8 @@ class Revision:
 def _run(args: list[str], cwd: Path) -> str:
     try:
         r = subprocess.run(
-            args, cwd=str(cwd), capture_output=True, text=True, timeout=120, check=False
+            args, cwd=str(cwd), capture_output=True, text=True, timeout=120, check=False,
+            encoding="utf-8", errors="replace",
         )
     except FileNotFoundError as e:  # pragma: no cover
         raise GitError(f"git не найден: {e}") from e
@@ -139,7 +140,8 @@ def gh_api(endpoint: str, accept: str = "application/vnd.github+json") -> dict |
     if tok:
         cmd += ["-H", f"Authorization: Bearer {tok}"]
     cmd += [url]
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=45, check=False)
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=45, check=False,
+                       encoding="utf-8", errors="replace")
     if r.returncode != 0:
         raise GitError(f"GitHub API недоступен: {r.stderr.strip()[:200]}")
     import json as _json

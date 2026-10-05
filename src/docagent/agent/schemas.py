@@ -73,8 +73,35 @@ def parse_llm_json(text: str) -> dict | None:
     return obj if isinstance(obj, dict) else None
 
 
+def normalize_draft_obj(obj: dict) -> dict:
+    """Дешёвая нормализация до pydantic-валидации (экономит retry-циклы на 3b-моделях)."""
+    if not isinstance(obj, dict):
+        return obj
+    a = obj.get("action")
+    if isinstance(a, str):
+        a_l = a.lower().strip()
+        # частые галлюцинации мелких моделей
+        alias = {"add": "append", "insert": "append", "modify": "update",
+                 "replace": "update", "delete": "remove", "edit": "update",
+                 "create_new": "create", "new": "create"}
+        obj["action"] = alias.get(a_l, a_l)
+    anchor = obj.get("anchor")
+    if isinstance(anchor, str):
+        s = anchor.strip().strip("`").strip()
+        if not s or s.lower() in {"null", "none", "n/a", "-"}:
+            obj["anchor"] = None
+        else:
+            # якорь должен быть заголовком; если модель вернула текст секции — берём первую строку
+            first = s.splitlines()[0].strip()
+            if not first.startswith("#"):
+                first = "## " + first[:80]
+            obj["anchor"] = first
+    return obj
+
+
 def validate_draft(obj: dict) -> DocDraft:
     """Pydantic-валидация одного объекта; бросает ValidationError/ValueError."""
+    obj = normalize_draft_obj(obj)
     allowed = {f for f in DocDraft.model_fields}
     cleaned = {k: v for k, v in obj.items() if k in allowed}
     return DocDraft.model_validate(cleaned)

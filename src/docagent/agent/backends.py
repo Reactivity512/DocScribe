@@ -43,6 +43,7 @@ class OpenAICompatBackend:
         resp = self._get().chat.completions.create(
             model=self.s.model,
             temperature=self.s.temperature,
+            max_tokens=self.s.max_tokens,
             messages=[{"role": "system", "content": system},
                       {"role": "user", "content": user}],
         )
