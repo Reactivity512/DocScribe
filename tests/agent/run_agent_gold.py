@@ -91,8 +91,11 @@ def main() -> int:
         }
         rows.append(row)
         flag = "OK " if row["drafts"] and not hallu else ("SILENT" if row["behavior"] != "write_docs" else "BAD ")
+        drop_reasons = "; ".join(f"{d['target']}: {d['error'][:120]}" for d in res.dropped) or "-"
         print(f"{flag}{row['id']}: drafts={row['drafts']} llm={row['llm_calls']} "
               f"targets={row['target_got']} must={row['must_include_hit']} drop={bool(row['dropped'])}")
+        if row["dropped"]:
+            print(f"    reasons: {drop_reasons}")
 
     elapsed = round(time.monotonic() - t0, 1)
     n = len(rows)

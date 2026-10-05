@@ -31,6 +31,13 @@ from docagent.mcp_server.models import DocsDecision, ExpectedDocsTarget
 # имена, объявленные в добавленных строках диффа (def/class/async def и ключевые аргументы)
 _ADDED_IDENT_RE = re.compile(
     r"^\+\s*(?:async\s+)?(?:def|class)\s+([A-Za-z_][A-Za-z0-9_]*)", re.M)
+# новые константы верхнего уровня: +TIMEOUT_SECONDS = 30
+_ADDED_CONST_RE = re.compile(r"^\+\s*([A-Z][A-Z0-9_]{2,})\s*=", re.M)
+# ключи словарей конфигурации/фич: +"new_exporters": True
+_ADDED_DICT_KEY_RE = re.compile(r'^\+\s*["\']([A-Za-z_][A-Za-z0-9_.\-]{2,})["\']\s*:', re.M)
+# сигнатуры из удалённых строк — старые имена тоже разрешены цитировать (action=remove/update)
+_REMOVED_IDENT_RE = re.compile(
+    r"^-\s*(?:async\s+)?(?:def|class)\s+([A-Za-z_][A-Za-z0-9_]*)", re.M)
 
 
 @dataclass
@@ -82,6 +89,14 @@ class ToolProvider:
         names.extend(analysis.env_vars_touched)
         # fallback для пустых/новых репозиториев: всё, что добавлено в диффе (def/class/signature)
         for m in _ADDED_IDENT_RE.finditer(diff_text):
+            names.append(m.group(1))
+        # удалённые сигнатуры: старые имена легальны в remove/update-черновиках
+        for m in _REMOVED_IDENT_RE.finditer(diff_text):
+            names.append(m.group(1))
+        # новые константы и ключи конфигурации — модель обязана их цитировать дословно
+        for m in _ADDED_CONST_RE.finditer(diff_text):
+            names.append(m.group(1))
+        for m in _ADDED_DICT_KEY_RE.finditer(diff_text):
             names.append(m.group(1))
         # детерминированный порядок, без дублей
         seen, out = set(), []
@@ -177,6 +192,9 @@ class DocsAgent:
                                             int((time.monotonic() - t0) * 1000)))
             obj = parse_llm_json(raw)
             if obj is None:
+                # частый случай у 3b-моделей: валидный JSON, но обрезанный по max_tokens
+                if raw and raw.count("{") > raw.count("}"):
+                    return None, "truncated_reply (increase DOCAGENT_LLM_MAX_TOKENS)"
                 last_err = "reply is not a JSON object"
                 continue
             if set(obj.keys()) == {"skipped_reason"}:
