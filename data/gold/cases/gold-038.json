@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-038",
+  "category": "docs_only",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/QGIS/QGIS-Documentation/pull/7887 (обновление раздела пользователем)",
+    "reference": "PR только с правками документации"
+  },
+  "code_change": {
+    "files": [
+      "docs/guide/inference.md"
+    ],
+    "summary": "Автор сам добавил раздел документации без изменений в коде.",
+    "diff": "--- a/docs/guide/inference.md\n+++ b/docs/guide/inference.md\n@@ -60,6 +60,14 @@\n+### Ограничения модели\n+\n+* Поддерживаются только модели с одним входом.\n+* Размер входного изображения фиксирован — 224x224.\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Важное уточнение semantics: stay_silent здесь означает 'не создавать свой draft PR', а не 'проигнорировать PR'. Корректное поведение — один короткий служебный комментарий 'код не затронут, документация обновлена автором' и никаких правок. Разрешено отдельным конфигом docs_only_comment=true.",
+  "raw_patch": null
+}

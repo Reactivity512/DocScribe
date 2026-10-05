@@ -1,0 +1,59 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-013",
+  "category": "adr_impact",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "adr_new",
+    "breaking_change"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Смена подсистемы хранения состояния"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/state/store.py",
+      "pyproject.toml"
+    ],
+    "summary": "Хранилище состояния графа: SQLite вместо JSON-файла; для production заложен интерфейс под Postgres.",
+    "diff": "--- a/demopkg/state/store.py\n+++ b/demopkg/state/store.py\n@@ -1,9 +1,12 @@\n-import json\n+import sqlite3\n+\n+# MVP: SQLite. Интерфейс рассчитан на реализацию поверх PostgreSQL в production.\n+SCHEMA = \"CREATE TABLE IF NOT EXISTS state (run_id TEXT PRIMARY KEY, payload BLOB)\"\n \n-def load_state(path):\n-    with open(path) as fh:\n-        return json.load(fh)\n+def load_state(db_path, run_id):\n+    con = sqlite3.connect(db_path)\n+    row = con.execute(\"SELECT payload FROM state WHERE run_id = ?\", (run_id,)).fetchone()\n+    return pickle.loads(row[0]) if row else None\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/adr/0005-checkpoint-storage.md"
+    ],
+    "target_section": "ADR-0005",
+    "human_written_text": "# ADR 0005. Хранилище чекпоинтов состояния\n\nДата: 2026-10-05  \nСтатус: принят\n\n## Контекст\n\nСостояние прерванного выполнения сохранялось в JSON-файл. При параллельных\nзапусках записи терялись, а повреждённый файл блокировал весь пайплайн.\n\n## Решение\n\nЧекпоинты хранятся в SQLite: таблица `state(run_id, payload)`, сериализация —\npickle. Интерфейс `load_state(db_path, run_id)` описан так, чтобы его можно было\nреализовать поверх PostgreSQL без изменения вызывающего кода.\n\n## Последствия\n\n* (+) Атомарные записи, отсутствие гонок при конкурентных запусках.\n* (+) Миграция на Postgres для production сводится к новой реализации интерфейса.\n* (-) Формат JSON больше не читается человеком; отладка требует `sqlite3`.\n* (-) Breaking change: подпись `load_state()` изменена, вызовы `load_state(path)` невалидны.\n",
+    "must_include": [
+      "SQLite",
+      "run_id",
+      "PostgreSQL",
+      "Breaking change"
+    ],
+    "must_not_include": [
+      "Redis",
+      "MongoDB",
+      "WAL"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "breaking"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Комбинированный кейс: ADR + предупреждение о ломающем изменении сигнатуры в том же PR.",
+  "raw_patch": null
+}

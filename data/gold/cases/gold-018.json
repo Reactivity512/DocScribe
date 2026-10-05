@@ -1,0 +1,56 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-018",
+  "category": "readme_update",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "dependency_added",
+    "config_or_env_changed"
+  ],
+  "severity": "low",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Изменение процесса настройки окружения разработчика"
+  },
+  "code_change": {
+    "files": [
+      "Makefile",
+      "CONTRIBUTING.md"
+    ],
+    "summary": "Для разработки нужен Docker (compose для Ollama) и команда make dev-setup.",
+    "diff": "--- a/Makefile\n+++ b/Makefile\n@@ -6,6 +6,9 @@ help:\n+# backend модели выбирается через DOCS_BACKEND=ollama|vllm (по умолчанию ollama)\n+dev-setup:\n+\tdocker compose up -d ollama\n+\tpip install -e \".[dev]\"\n+\n test:\n \tpytest\n"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/contributing.md"
+    ],
+    "target_section": "Локальное окружение разработки",
+    "human_written_text": "## Локальное окружение разработки\n\nДля запуска тестов и агента локально нужен Docker — в нём поднимаются контейнеры\nOllama с моделью `qwen2.5-coder:3b`.\n\n```bash\nmake dev-setup      # docker compose up -d ollama + pip install -e \".[dev]\"\nmake test\n```\n\nПосле установки проверьте доступность модели: `curl http://localhost:11434/api/tags`.\nПереключение на vLLM выполняется переменными окружения без изменения кода\n(`DOCS_BACKEND=vllm`, `OPENAI_BASE_URL=http://localhost:8000/v1`).\n",
+    "must_include": [
+      "make dev-setup",
+      "docker compose",
+      "qwen2.5-coder:3b",
+      "DOCS_BACKEND"
+    ],
+    "must_not_include": [
+      "npm install",
+      "virtualenvwrapper"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Инфраструктурные изменения тоже часть контракта для контрибьюторов — но приоритет low, агент может предложить короткую правку.",
+  "raw_patch": null
+}

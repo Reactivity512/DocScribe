@@ -1,0 +1,46 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-029",
+  "category": "internal_refactor",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Внутренняя оптимизация производительности"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/cache.py"
+    ],
+    "summary": "Внутренняя оптимизация: словарь вместо списка при поиске ключа; публичный get_cached() не изменился.",
+    "diff": "--- a/demopkg/cache.py\n+++ b/demopkg/cache.py\n@@ -18,9 +18,9 @@ _INDEX = []\n-def _find(key):\n-    for entry in _INDEX:\n-        if entry[0] == key:\n-            return entry[1]\n+def _find(key):\n+    for entry in _INDEX.values():\n+        if entry[\"key\"] == key:\n+            return entry[\"value\"]\n     return None\n",
+    "public_api_impact": "none"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "en",
+  "labels": [
+    "negative",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Спорный кейс: пользователь может заметить ускорение. Эталон — молчать, потому что контракт и API-ref не меняются. Помечаем как edge для последующего пересмотра порога.",
+  "raw_patch": null
+}

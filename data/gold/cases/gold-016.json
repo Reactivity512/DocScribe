@@ -1,0 +1,55 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-016",
+  "category": "readme_update",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "new_user_feature"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Смена рекомендуемой точки входа пакета"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/__init__.py"
+    ],
+    "summary": "Публичный вход в пакет изменён: рекомендуемый способ — from demopkg import Client.",
+    "diff": "--- a/demopkg/__init__.py\n+++ b/demopkg/__init__.py\n@@ -1,6 +1,8 @@\n-from .client import APIClient\n+from .client import APIClient as Client\n+from .exporters import export_to_csv, export_to_parquet\n \n-__all__ = [\"APIClient\"]\n+__version__ = \"0.4.0\"\n+__all__ = [\"Client\", \"export_to_csv\", \"export_to_parquet\", \"__version__\"]\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "README.md"
+    ],
+    "target_section": "Quickstart",
+    "human_written_text": "## Quickstart\n\n```python\nfrom demopkg import Client, export_to_parquet\n\nwith Client(...) as app:          # alias for demopkg.client.APIClient\n    rows = app.fetch_records(\"users\", timeout=5.0)\n    export_to_parquet(rows, \"users.parquet\")\n```\n\n`APIClient` is still importable from `demopkg.client`, but `demopkg.Client` is\nthe documented entry point as of version 0.4.0.\n",
+    "must_include": [
+      "from demopkg import Client",
+      "0.4.0",
+      "export_to_parquet"
+    ],
+    "must_not_include": [
+      "import demopkg as dp",
+      "demopkg.connect()"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Alias без удаления старого имени: агент должен показать и новый канон, и обратную совместимость.",
+  "raw_patch": null
+}

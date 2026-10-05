@@ -1,0 +1,61 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-005",
+  "category": "api_change",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "api_new",
+    "dependency_added"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Новый модуль + настройка + зависимость: документация в двух местах"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/cache.py",
+      "demopkg/settings.py",
+      "pyproject.toml"
+    ],
+    "summary": "Добавлен файловый кэш get_cached() с настройкой CACHE_DIR; новая зависимость diskcache.",
+    "diff": "--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -10,6 +10,7 @@ class Settings(BaseSettings):\n     base_url: str = \"https://api.example.com\"\n+    # читается из DEMOPKG_CACHE_DIR (см. docs/configuration.md)\n+    cache_dir: str = \".demopkg-cache\"\n     page_size: int = 50\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -21,6 +21,7 @@ dependencies = [\n     \"pandas>=2.0\",\n+    \"diskcache>=5.6\",\n ]\n--- a/demopkg/cache.py\n+++ b/demopkg/cache.py\n@@ new file mode 100644\n+def get_cached(key, ttl_seconds=300):\n+    \"\"\"Вернуть значение из файлового кэша по ключу key.\"\"\"\n",
+    "public_api_impact": "added"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/api-reference.md",
+      "docs/configuration.md"
+    ],
+    "target_section": "Кэширование",
+    "human_written_text": "## Кэширование\n\nМодуль `demopkg.cache` предоставляет файловый кэш на основе библиотеки `diskcache`.\n\n#### get_cached(key, ttl_seconds=300)\n\nВозвращает значение из кэша по строковому ключу `key`. Если записи нет или её\nвозраст превысил `ttl_seconds` (по умолчанию 300), возвращается `None`.\n\nНастройки:\n\n| Переменная окружения | По умолчанию | Описание |\n|---|---|---|\n| `DEMOPKG_CACHE_DIR` | `.demopkg-cache` | Каталог для файлов кэша. |\n\nНовая обязательная зависимость: `diskcache>=5.6`.\n",
+    "must_include": [
+      "get_cached",
+      "ttl_seconds",
+      "DEMOPKG_CACHE_DIR",
+      "diskcache"
+    ],
+    "must_not_include": [
+      "redis",
+      "memcached",
+      "cache_backend"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "multi_file"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Проверяем связку config_or_env_changed и dependency_added: агент обязан задокументировать env-переменную и новую зависимость.",
+  "raw_patch": null
+}

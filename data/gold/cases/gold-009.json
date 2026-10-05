@@ -1,0 +1,55 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-009",
+  "category": "feature_doc",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "new_user_feature",
+    "behavior_changed"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/QGIS/QGIS-Documentation/pull/7887 (обновление раздела руководства)",
+    "reference": "Новый способ использования существующего класса"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/session.py"
+    ],
+    "summary": "Появился контекстный менеджер Session: автозакрытие соединения и повторное использование токена.",
+    "diff": "--- a/demopkg/session.py\n+++ b/demopkg/session.py\n@@ -18,6 +18,14 @@ class Session:\n     def __init__(self, token):\n         self.token = token\n+\n+    def __enter__(self):\n+        self.connect()\n+        return self\n+\n+    def __exit__(self, exc_type, exc, tb):\n+        self.close()\n+        return False\n"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/guide/getting-started.md"
+    ],
+    "target_section": "Работа с сессией",
+    "human_written_text": "### Работа с сессией\n\nСоединение лучше открывать через контекстный менеджер — тогда оно гарантированно\nзакрывается даже при исключении:\n\n```python\nfrom demopkg.session import Session\n\nwith Session(token=\"...\") as session:\n    rows = session.client.fetch_records(\"users\", timeout=5.0)\n```\n\nРучное управление тоже доступно: вызовите `session.connect()` и затем\n`session.close()`. Объект `Session` повторно использует токен для всех запросов\nвнутри блока, поэтому повторная авторизация на каждый вызов не выполняется.\n",
+    "must_include": [
+      "with Session",
+      "connect()",
+      "close()",
+      "токен"
+    ],
+    "must_not_include": [
+      "session.restart()",
+      "thread-safe"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Проверяем обновление существующего раздела, а не создание нового — важность пересечения changed-files x docs-references.",
+  "raw_patch": null
+}

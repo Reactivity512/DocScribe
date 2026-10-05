@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-030",
+  "category": "ci_test_only",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Изменения только в конфигурации CI"
+  },
+  "code_change": {
+    "files": [
+      ".github/workflows/ci.yml"
+    ],
+    "summary": "В CI добавлен job с кэшем pip и поднят timeout сборки.",
+    "diff": "--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -12,6 +12,10 @@ jobs:\n     steps:\n       - uses: actions/checkout@v4\n+      - uses: actions/cache@v4\n+        with:\n+          path: ~/.cache/pip\n+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}\n       - run: pip install -e \".[dev]\"\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "en",
+  "labels": [
+    "negative",
+    "noise"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Явное правило IGNORE из §6 плана. Частый источник спама в реальных репозиториях.",
+  "raw_patch": null
+}

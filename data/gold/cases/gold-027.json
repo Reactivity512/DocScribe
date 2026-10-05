@@ -1,0 +1,47 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-027",
+  "category": "internal_refactor",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Перемещение приватного модуля"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/utils/text.py",
+      "demopkg/text.py"
+    ],
+    "summary": "Приватный модуль utils.text перемещён в text; публичные реэкспорты не менялись.",
+    "diff": "--- a/demopkg/utils/text.py\n+++ /dev/null\n@@ -1,6 +0,0 @@\n-def _strip_accents(value):\n-    ...\n--- /dev/null\n+++ b/demopkg/text.py\n@@ new file mode 100644\n+def _strip_accents(value):\n+    ...\n",
+    "public_api_impact": "none"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "en",
+  "labels": [
+    "negative",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Rename/delete файлов выглядит драматично для diff-статистики. Проверяем, что префильтр смотрит на содержимое, а не на объём изменений.",
+  "raw_patch": null
+}

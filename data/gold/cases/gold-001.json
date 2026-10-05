@@ -1,0 +1,56 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-001",
+  "category": "api_change",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "api_new"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/QGIS/QGIS-Documentation/pull/7912 (документация нового алгоритма обработки)",
+    "reference": "Новый экспортёр данных в API reference"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/exporters.py"
+    ],
+    "summary": "Добавлена публичная функция export_to_parquet() с параметром compression.",
+    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -12,6 +12,18 @@ def export_to_csv(df, path, sep=\",\"):\n     df.to_csv(path, sep=sep)\n \n \n+def export_to_parquet(df, path, compression=\"snappy\"):\n+    \"\"\"Сохранить DataFrame в формате Parquet.\n+\n+    Args:\n+        df: данные для выгрузки.\n+        path: целевой файл.\n+        compression: алгоритм сжатия, по умолчанию \"snappy\".\n+    \"\"\"\n+    df.to_parquet(path, compression=compression)\n+\n+\n __all__ = [\"export_to_csv\", \"export_to_parquet\"]\n",
+    "public_api_impact": "added"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/api-reference.md"
+    ],
+    "target_section": "Exporters / export_to_parquet",
+    "human_written_text": "#### export_to_parquet(df, path, compression=\"snappy\")\n\nВыгружает DataFrame в файл формата Parquet.\n\n| Параметр | Тип | По умолчанию | Описание |\n|---|---|---|---|\n| `df` | `pandas.DataFrame` | — | Данные для выгрузки. |\n| `path` | `str` | — | Путь к целевому `.parquet` файлу. |\n| `compression` | `str` | `\"snappy\"` | Алгоритм сжатия: `snappy`, `gzip` или `zstd`. |\n\nВозвращает `None`. Формат Parquet предпочтителен для больших датасетов:\nфайл компакнее CSV и читается без потери типов столбцов.\n",
+    "must_include": [
+      "export_to_parquet",
+      "compression",
+      "snappy",
+      "Parquet"
+    ],
+    "must_not_include": [
+      "export_to_orc",
+      "lz4",
+      "row_group_size"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Эталон секции API-ref: сигнатура, таблица параметров, значение по умолчанию. must_not_include содержит частые галлюцинации qwen2.5-coder:3b (несуществующие форматы/параметры).",
+  "raw_patch": null
+}

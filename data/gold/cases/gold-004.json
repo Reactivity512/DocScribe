@@ -1,0 +1,57 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-004",
+  "category": "api_change",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "api_signature_changed",
+    "behavior_changed"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Смена значения по умолчанию = изменение поведения (частый ложно-негативный случай)"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/pipeline.py"
+    ],
+    "summary": "Значение по умолчанию у retries изменено с 3 на 5 — поведение изменилось без смены сигнатуры.",
+    "diff": "--- a/demopkg/pipeline.py\n+++ b/demopkg/pipeline.py\n@@ -58,7 +58,7 @@ class RetryPolicy:\n-    def __init__(self, retries=3, backoff=1.5):\n+    def __init__(self, retries=5, backoff=1.5):\n         self.retries = retries\n         self.backoff = backoff\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/api-reference.md"
+    ],
+    "target_section": "RetryPolicy",
+    "human_written_text": "### RetryPolicy(retries=5, backoff=1.5)\n\nControls automatic retries for transient failures.\n\n| Parameter | Type | Default | Description |\n|---|---|---|---|\n| `retries` | `int` | `5` | Number of retry attempts. Changed from `3` in v0.4. |\n| `backoff` | `float` | `1.5` | Exponential backoff multiplier between attempts. |\n\nWith the new default, a failing request is attempted up to six times in\ntotal (one initial attempt plus five retries).\n",
+    "must_include": [
+      "retries",
+      "5",
+      "backoff",
+      "1.5"
+    ],
+    "must_not_include": [
+      "retry_after",
+      "jitter"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Хитрый кейс: diff минимальный, имя символа не менялся — префильтр по 'новым def/class' его не поймает. Проверяем правило behavior_changed.",
+  "raw_patch": null
+}

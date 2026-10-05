@@ -1,0 +1,58 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-012",
+  "category": "adr_impact",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "adr_changed",
+    "dependency_added"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Изменение ранее принятого архитектурного решения"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/llm/backend.py",
+      "pyproject.toml"
+    ],
+    "summary": "LLM-бэкенд переведён с прямого вызова Ollama на OpenAI-совместимый клиент: один код для Ollama и vLLM.",
+    "diff": "--- a/demopkg/llm/backend.py\n+++ b/demopkg/llm/backend.py\n@@ -5,10 +5,10 @@\n-import ollama\n+from openai import OpenAI\n \n-def generate(prompt, model=\"qwen2.5-coder:3b\"):\n-    return ollama.generate(model=model, prompt=prompt)[\"response\"]\n+# единый клиент для Ollama и vLLM (OpenAI-совместимый endpoint)\n+def generate(prompt, model=\"qwen2.5-coder:3b\", base_url=None):\n+    client = OpenAI(base_url=base_url or os.environ[\"OPENAI_BASE_URL\"], api_key=\"unused\")\n+    return client.chat.completions.create(model=model, messages=[{\"role\": \"user\", \"content\": prompt}]).choices[0].message.content\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -22,7 +22,7 @@ dependencies = [\n-    \"ollama>=0.3\",\n+    \"openai>=1.40\",\n ]\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/adr/0002-llm-backend.md"
+    ],
+    "target_section": "ADR-0002 / Consequences",
+    "human_written_text": "## Update (2026-10-05): OpenAI-compatible client instead of native bindings\n\nThe original decision used the `ollama` Python package directly. That made the\nvLLM deployment path a second implementation with its own bugs.\n\nWe now talk to every backend through the OpenAI-compatible HTTP API and select\nthe endpoint with the `OPENAI_BASE_URL` environment variable:\n\n| Backend | `OPENAI_BASE_URL` |\n|---|---|\n| Ollama (local dev) | `http://localhost:11434/v1` |\n| vLLM (docker) | `http://vllm:8000/v1` |\n\nConsequences: one code path for both backends; the `ollama` dependency is\ndropped; `api_key` is still required by the client but is never validated\nlocally, so a placeholder value is acceptable.\n",
+    "must_include": [
+      "OPENAI_BASE_URL",
+      "OpenAI-compatible",
+      "vLLM",
+      "ollama"
+    ],
+    "must_not_include": [
+      "LangChain",
+      "litellm"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "ADR amend, а не новый документ: агент должен дополнить существующий файл, а не создать ADR-000N. Проверяем target_section.",
+  "raw_patch": null
+}

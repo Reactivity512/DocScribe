@@ -1,0 +1,56 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-015",
+  "category": "readme_update",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "config_or_env_changed",
+    "dependency_added"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/tensorflow/docs/pull/128320 (правки в справочном разделе)",
+    "reference": "Изменение системных требований: правка README"
+  },
+  "code_change": {
+    "files": [
+      "pyproject.toml",
+      "demopkg/settings.py"
+    ],
+    "summary": "Требуемая версия Python поднята до 3.11, добавлена обязательная переменная DEMOPKG_API_TOKEN.",
+    "diff": "--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -8,7 +8,7 @@\n [project]\n name = \"demopkg\"\n-requires-python = \">=3.9\"\n+requires-python = \">=3.11\"\n dependencies = [\"pandas>=2.0\", \"openai>=1.40\"]\n--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -12,6 +12,7 @@ class Settings(BaseSettings):\n+    api_token: str  # обязательное поле, читается из DEMOPKG_API_TOKEN\n     page_size: int = 50\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "README.md"
+    ],
+    "target_section": "Установка",
+    "human_written_text": "## Установка\n\nТребуется Python 3.11 или новее.\n\n```bash\npython3.11 -m venv .venv && source .venv/bin/activate\npip install demopkg\n```\n\nПеред первым запуском обязательно задайте токен доступа — без него приложение\nне стартует:\n\n```bash\nexport DEMOPKG_API_TOKEN=\"<ваш токен>\"\n```\n",
+    "must_include": [
+      "Python 3.11",
+      "DEMOPKG_API_TOKEN",
+      "pip install demopkg"
+    ],
+    "must_not_include": [
+      "conda",
+      "poetry install"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "README — самая заметная часть документации. Пропуск такого кейса особенно дорог: проверяем recall.",
+  "raw_patch": null
+}

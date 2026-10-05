@@ -1,0 +1,54 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-006",
+  "category": "api_change",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "config_or_env_changed"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Изменение допустимых значений конфигурации"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/settings.py"
+    ],
+    "summary": "Переменная DEMOPKG_LOG_LEVEL теперь поддерживает значение JSON вместо текстового вывода логов.",
+    "diff": "--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -22,7 +22,7 @@ class Settings(BaseSettings):\n-    log_level: str = \"INFO\"   # DEBUG, INFO, WARNING; текстовый вывод\n+    # DEMOPKG_LOG_LEVEL; JSON включает structured logging по одной записи на строку\n+    log_level: str = \"INFO\"   # DEBUG, INFO, WARNING, JSON\n     log_format: str = \"text\"\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/configuration.md"
+    ],
+    "target_section": "Environment variables / DEMOPKG_LOG_LEVEL",
+    "human_written_text": "#### `DEMOPKG_LOG_LEVEL`\n\nSets the verbosity of console logging. Accepted values: `DEBUG`, `INFO`,\n`WARNING`, and the new `JSON` value which emits one structured JSON object\nper line and disables the human-readable formatter.\n\n```bash\nexport DEMOPKG_LOG_LEVEL=JSON   # machine-readable logs for log aggregators\n```\n\nWhen `JSON` is selected, `DEMOPKG_LOG_FORMAT` is ignored.\n",
+    "must_include": [
+      "DEMOPKG_LOG_LEVEL",
+      "JSON",
+      "structured"
+    ],
+    "must_not_include": [
+      "SYSLOG",
+      "logrotate"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Конфиг — часть публичного контракта. Тестируем, что агент не игнорирует правки комментариев/валидных значений.",
+  "raw_patch": null
+}

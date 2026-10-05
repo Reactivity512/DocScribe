@@ -1,0 +1,55 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-014",
+  "category": "adr_impact",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "adr_changed",
+    "dependency_added"
+  ],
+  "severity": "low",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Изменение политики зависимостей/безопасности"
+  },
+  "code_change": {
+    "files": [
+      "requirements-dev.txt",
+      "Makefile"
+    ],
+    "summary": "В CI добавлен pip-audit; политика безопасности требует проверки зависимостей перед релизом.",
+    "diff": "--- a/Makefile\n+++ b/Makefile\n@@ -14,6 +14,9 @@ lint:\n \truff check src tests\n+\n+audit:\n+\tpip-audit -r requirements.txt --strict\n--- a/requirements-dev.txt\n+++ b/requirements-dev.txt\n@@ -3,3 +3,4 @@ pytest>=8.0\n ruff>=0.5\n+pip-audit>=2.7\n"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/adr/0003-dependency-policy.md"
+    ],
+    "target_section": "Dependency policy / auditing",
+    "human_written_text": "## Auditing (added 2026-10-05)\n\nThe policy previously covered only version pinning. It now also requires a\nvulnerability audit of the runtime dependency set before every release.\n\n```make\nmake audit   # runs: pip-audit -r requirements.txt --strict\n```\n\nRules:\n\n* `pip-audit` must pass with `--strict`; a failed audit blocks the release tag.\n* Dev-only tools live in `requirements-dev.txt` and are not part of the audited runtime set.\n* Exceptions require a comment in `docs/adr/0003-dependency-policy.md` naming the advisory ID.\n",
+    "must_include": [
+      "pip-audit",
+      "--strict",
+      "requirements-dev.txt"
+    ],
+    "must_not_include": [
+      "safety",
+      "dependabot auto-merge"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Не все изменения CI — noise: правка, влияющая на политику, должна попадать в ADR. Пограничный кейс против правила 'ci_test_only => молчать'.",
+  "raw_patch": null
+}

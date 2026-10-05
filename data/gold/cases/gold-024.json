@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-024",
+  "category": "typo_fix",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Переименование приватного атрибута с опечаткой"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/session.py"
+    ],
+    "summary": "Исправлена опечатка в имени приватного атрибута _toke -> _token (внутреннее поле, не API).",
+    "diff": "--- a/demopkg/session.py\n+++ b/demopkg/session.py\n@@ -21,8 +21,8 @@ class Session:\n     def connect(self):\n-        self._toke = self._read_toke()\n-        return self._auth(self._toke)\n+        self._token = self._read_token()\n+        return self._auth(self._token)\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "en",
+  "labels": [
+    "negative",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Ловушка: имя символа изменилось, но символ приватный (_prefix) и не входит в __all__ — публичный контракт не затронут.",
+  "raw_patch": null
+}

@@ -1,0 +1,49 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-034",
+  "category": "style_format_only",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Массовое форматирование кода"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/client.py",
+      "demopkg/exporters.py",
+      "demopkg/pipeline.py"
+    ],
+    "summary": "Прогнан ruff format: переносы строк и кавычки; логика не менялась.",
+    "diff": "--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -44,9 +44,11 @@ class APIClient:\n-        url = f\"{self.base_url}/{endpoint}\"\n-        resp = self.session.get(url, params={\"limit\": limit}, timeout=timeout)\n+        url = (\n+            f\"{self.base_url}/{endpoint}\"\n+        )\n+        resp = self.session.get(\n+            url, params={\"limit\": limit}, timeout=timeout\n+        )\n",
+    "public_api_impact": "none"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "en",
+  "labels": [
+    "negative",
+    "multi_file",
+    "noise"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Опасный кейс: огромный diff при нулевом смысловом изменении. Проверка того, что префильтр сравнивает AST/токены, а не строки.",
+  "raw_patch": null
+}

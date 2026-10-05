@@ -1,0 +1,44 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-028",
+  "category": "internal_refactor",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Изменения только в тестах"
+  },
+  "code_change": {
+    "files": [
+      "tests/test_exporters.py"
+    ],
+    "summary": "Тесты переписаны с unittest-подобных assert на pytest.raises; код пакета не менялся.",
+    "diff": "--- a/tests/test_exporters.py\n+++ b/tests/test_exporters.py\n@@ -5,8 +5,8 @@ def test_export_to_csv(tmp_path):\n-    try:\n-        export_to_csv(df, tmp_path / \"out.csv\")\n-    except Exception as exc:\n-        assert False, exc\n+    export_to_csv(df, tmp_path / \"out.csv\")\n+    assert (tmp_path / \"out.csv\").exists()\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Правило 'tests => молчим'. Важный negative: большой diff при нулевом влиянии на пользователя.",
+  "raw_patch": null
+}

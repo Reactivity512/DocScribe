@@ -1,0 +1,59 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-040",
+  "category": "bootstrap",
+  "expected_behavior": "escalate_bootstrap",
+  "trigger_kind": [
+    "dependency_added"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "bootstrap_scan",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Bootstrap Stage 2 — фактическая часть README из кода и pyproject"
+  },
+  "code_change": {
+    "files": [
+      "README.md",
+      "pyproject.toml",
+      "demopkg/settings.py"
+    ],
+    "summary": "Bootstrap Stage 2: каркас docs/ уже создан (Stage 1 завершён); теперь по коду и pyproject заполняется фактическая часть README — установка и quickstart.",
+    "diff": "# bootstrap scan (not a diff)\nstate: docs/index.md EXISTS (stage 1 done), docs/api-reference.md is scaffold only\nreadme_current: \"# demopkg\\n\\nКлиент API и выгрузка данных.\\n\" (4 lines)\npyproject: requires-python >=3.10; deps pandas>=2.0, openai>=1.40, diskcache>=5.6\nenv_vars_in_settings: DEMOPKG_API_TOKEN (required), DEMOPKG_BASE_URL (optional, default https://api.example.com)\nentry_points: console_scripts demopkg = demopkg.cli:main\n"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "README.md"
+    ],
+    "target_section": "Установка и быстрый старт",
+    "human_written_text": "## Установка\n\n```bash\npip install git+https://github.com/demo-org/demopkg.git\n```\n\nТребуется Python 3.10+. Зависимости: pandas, openai, diskcache.\n\n## Быстрый старт\n\n```python\nfrom demopkg import APIClient\n\nclient = APIClient(token=os.environ[\"DEMOPKG_API_TOKEN\"])\nrecords = client.fetch_records(\"exports\", limit=10)\n```\n\nПеременная окружения `DEMOPKG_API_TOKEN` обязательна; `DEMOPKG_BASE_URL`\nнеобязательна (по умолчанию `https://api.example.com`).\n",
+    "must_include": [
+      "pip install",
+      "DEMOPKG_API_TOKEN",
+      "fetch_records",
+      "Python 3.10"
+    ],
+    "must_not_include": [
+      "brew install",
+      "conda install demopkg",
+      "docker run demopkg",
+      "DEMOPKG_API_KEY"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "hard_for_small_model"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Вторая ловушка против галлюцинаций: модель обязана взять версии зависимостей и имена env-переменных СТРОГО из скана, а не из типовых шаблонов README. must_not_include запрещает альтернативные способы установки и выдуманное имя DEMOPKG_API_KEY (в коде — DEMOPKG_API_TOKEN). Stage выполняется только после одобренного Stage 1.",
+  "raw_patch": null
+}

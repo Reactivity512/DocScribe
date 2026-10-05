@@ -1,0 +1,46 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-031",
+  "category": "ci_test_only",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "low",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Инструментарий покрытия кода"
+  },
+  "code_change": {
+    "files": [
+      "pyproject.toml",
+      ".github/workflows/ci.yml"
+    ],
+    "summary": "Включён coverage с порогом 80%, отчёт публикуется в CI.",
+    "diff": "--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -40,3 +40,7 @@\n [tool.coverage.run]\n+source = [\"demopkg\"]\n+fail_under = 80\n--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -20,3 +20,5 @@\n+      - run: pytest --cov --cov-report=xml\n+      - uses: codecov/codecov-action@v4\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative",
+    "multi_file"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Изменение в pyproject.toml обычно триггерит внимание — здесь это tool-секция, не [project]. Проверяем аккуратность парсинга pyproject.",
+  "raw_patch": null
+}

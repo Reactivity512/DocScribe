@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-039",
+  "category": "docs_only",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Правка ссылок внутри документации"
+  },
+  "code_change": {
+    "files": [
+      "docs/api-reference.md"
+    ],
+    "summary": "Исправлены битые относительные ссылки на разделы руководства.",
+    "diff": "--- a/docs/api-reference.md\n+++ b/docs/api-reference.md\n@@ -77,7 +77,7 @@ See the\n-[guide](../guides/inference.md)\n+[guide](../guide/inference.md)\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "en",
+  "labels": [
+    "negative",
+    "noise"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Пара DOCS_ONLY кейсов нужна, чтобы оценить долю PR, которые агент обязан пропустить целиком, но отметить в отчёте Eval как 'docs-only'.",
+  "raw_patch": null
+}
