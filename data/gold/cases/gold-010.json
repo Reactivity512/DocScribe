@@ -1,0 +1,56 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-010",
+  "category": "feature_doc",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "new_user_feature",
+    "api_new"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Новый потоковый API для больших данных"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/exporters.py"
+    ],
+    "summary": "Добавлен генератор iter_export_chunks() для выгрузки больших датасетов частями.",
+    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -30,6 +30,14 @@ def export_to_parquet(df, path, compression=\"snappy\"):\n     df.to_parquet(path, compression=compression)\n \n \n+def iter_export_chunks(df, chunksize=10_000):\n+    \"\"\"Streaming generator: yields DataFrames of at most `chunksize` rows.\n+\n+    The last chunk may be shorter than requested.\n+    \"\"\"\n+    for start in range(0, len(df), chunksize):\n+        yield df.iloc[start : start + chunksize]\n",
+    "public_api_impact": "added"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/guide/large-datasets.md"
+    ],
+    "target_section": "Streaming export",
+    "human_written_text": "## Streaming export of large datasets\n\nLoading a whole dataset into memory before exporting it is not always\npossible. `iter_export_chunks` yields slices of the source DataFrame so each\nchunk can be written and released independently:\n\n```python\nfrom demopkg.exporters import iter_export_chunks, export_to_parquet\n\nfor i, chunk in enumerate(iter_export_chunks(df, chunksize=10_000)):\n    export_to_parquet(chunk, f\"out/part-{i}.parquet\")\n```\n\n`chunksize` defaults to `10_000` rows. The function is a generator, so no\nmemory is allocated until the first chunk is requested, and the final chunk may\ncontain fewer rows than requested.\n",
+    "must_include": [
+      "iter_export_chunks",
+      "chunksize",
+      "generator",
+      "10_000"
+    ],
+    "must_not_include": [
+      "multiprocessing",
+      "async for"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Генераторная семантика (ленивость, последний чанк короче) — проверяем точность формулировок, а не только список параметров.",
+  "raw_patch": null
+}

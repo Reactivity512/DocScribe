@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-033",
+  "category": "ci_test_only",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "low",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Конфигурация pre-commit"
+  },
+  "code_change": {
+    "files": [
+      ".pre-commit-config.yaml"
+    ],
+    "summary": "Добавлен хук mypy в pre-commit.",
+    "diff": "--- a/.pre-commit-config.yaml\n+++ b/.pre-commit-config.yaml\n@@ -8,3 +8,7 @@ repos:\n       - id: ruff\n+  - repo: https://github.com/pre-commit/mirrors-mypy\n+    rev: v1.11.0\n+    hooks:\n+      - id: mypy\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative",
+    "noise"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Отсутствие изменений в коде пакета вообще — простейший negative, но важен для статистики precision на шумовых PR.",
+  "raw_patch": null
+}

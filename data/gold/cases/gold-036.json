@@ -1,0 +1,46 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-036",
+  "category": "style_format_only",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Реформатирование docstring без смены смысла"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/exporters.py"
+    ],
+    "summary": "Docstring переформатирован под Google-стиль: те же слова, другие отступы и заголовки секций.",
+    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -30,10 +30,12 @@ def export_to_parquet(df, path, compression=\"snappy\"):\n-    \"\"\"Сохранить DataFrame в формате Parquet.\n-    df: данные.\n-    path: куда писать.\n-    compression: algo, snappy по умолчанию.\n-    \"\"\"\n+    \"\"\"Сохранить DataFrame в формате Parquet.\n+\n+    Args:\n+        df: данные.\n+        path: куда писать.\n+        compression: algo, snappy по умолчанию.\n+    \"\"\"\n",
+    "public_api_impact": "none"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "en",
+  "labels": [
+    "negative",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Самый тонкий negative: трогает документацию, но не содержание. Агент не должен открывать PR 'потому что docstring изменился'.",
+  "raw_patch": null
+}

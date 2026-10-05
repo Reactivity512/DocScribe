@@ -1,0 +1,60 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-042",
+  "category": "bootstrap",
+  "expected_behavior": "escalate_bootstrap",
+  "trigger_kind": [
+    "new_user_feature"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "bootstrap_scan",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Bootstrap Stage 1 — структура docs/ и index"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/__init__.py",
+      "demopkg/client.py",
+      "demopkg/exporters.py",
+      "demopkg/settings.py"
+    ],
+    "summary": "Первый запуск: в репозитории нет папки docs/, README существует только в зачаточном виде.",
+    "diff": "# bootstrap scan (not a diff)\npackages: demopkg (4 modules, 11 public symbols)\npublic_symbols: APIClient, Client, Settings, export_to_csv, export_to_parquet,\n                iter_export_chunks, ImageClassifier, Session, RetryPolicy,\n                StorageBackend, create_backend\ndocs_dir: MISSING\nreadme: 6 lines, no installation section\nentry_points: none\ndependencies: pandas>=2.0, openai>=1.40, diskcache>=5.6\n"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/index.md",
+      "docs/api-reference.md",
+      "docs/guide/getting-started.md"
+    ],
+    "target_section": "Stage 1: scaffold",
+    "human_written_text": "# Документация demopkg\n\n* [Начало работы](guide/getting-started.md) — установка и первый запрос\n* [Справочник API](api-reference.md) — классы и функции пакета\n* [Архитектурные решения](adr/) — почему всё устроено так\n\n## Что делает пакет\n\n`demopkg` — клиент HTTP API с выгрузкой результатов в CSV и Parquet,\nфайловым кэшем и локальным инференсом моделей ONNX.\n",
+    "must_include": [
+      "docs/index.md",
+      "api-reference.md",
+      "getting-started.md",
+      "demopkg"
+    ],
+    "must_not_include": [
+      "полное описание каждой функции",
+      "ADR 0001"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "hard_for_small_model"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Bootstrap разбивается на 4 stage (см. §5 плана). Здесь ожидается ТОЛЬКО каркас: index + скелеты разделов. Ловушка для модели — соблазн сгенерировать сразу весь API-ref.",
+  "raw_patch": null
+}

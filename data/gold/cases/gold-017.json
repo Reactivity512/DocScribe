@@ -1,0 +1,57 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-017",
+  "category": "readme_update",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "config_or_env_changed"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Устаревшая информация о поддерживаемых версиях"
+  },
+  "code_change": {
+    "files": [
+      "README.md",
+      ".github/workflows/ci.yml",
+      "pyproject.toml"
+    ],
+    "summary": "Бейджи и матрица CI версий рассогласованы с requires-python=3.11 — README врёт о поддержке 3.8.",
+    "diff": "--- a/README.md\n+++ b/README.md\n@@ -3,7 +3,7 @@\n-![python](https://img.shields.io/badge/python-3.8%2B-blue)\n+![python](https://img.shields.io/badge/python-3.11%2B-blue)\n--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -10,7 +10,7 @@ jobs:\n     strategy:\n       matrix:\n-        python-version: [\"3.8\", \"3.9\", \"3.10\"]\n+        python-version: [\"3.11\", \"3.12\"]\n"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "README.md"
+    ],
+    "target_section": "Badges / Supported versions",
+    "human_written_text": "### Supported versions\n\nThe project is tested on Python 3.11 and 3.12 only. The badge and the CI\nmatrix were both out of date: `pyproject.toml` declares `requires-python =\n\">=3.11\"`, so installations on 3.8–3.10 fail at import time even though the old\nbadge advertised them.\n",
+    "must_include": [
+      "3.11",
+      "3.12",
+      "requires-python"
+    ],
+    "must_not_include": [
+      "3.8 supported",
+      "3.9"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "multi_file",
+    "edge"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Кейс 'код меняется, а README отстаёт' — главный сценарий ценности системы. Требует cross-file проверки (CI x pyproject x README).",
+  "raw_patch": null
+}

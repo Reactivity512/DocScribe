@@ -1,0 +1,55 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-008",
+  "category": "feature_doc",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "new_user_feature"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Новый CLI-инструмент: нужен раздел руководства с флагами"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/bench.py"
+    ],
+    "summary": "Добавлен CLI `python -m demopkg.bench` для измерения пропускной способности экспорта.",
+    "diff": "--- a/demopkg/bench.py\n+++ b/demopkg/bench.py\n@@ new file mode 100644\n+def main(argv=None):\n+    \"\"\"Run an export benchmark and print rows/sec.\"\"\"\n+    parser = argparse.ArgumentParser(prog=\"python -m demopkg.bench\")\n+    parser.add_argument(\"--rows\", type=int, default=100_000)\n+    parser.add_argument(\"--format\", choices=[\"csv\", \"parquet\"], default=\"parquet\")\n+    parser.add_argument(\"--output\", default=\"/tmp/bench\")\n"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/guide/benchmarking.md"
+    ],
+    "target_section": "Benchmarking CLI",
+    "human_written_text": "## Benchmarking exports\n\nThe package ships a small CLI that measures export throughput so you can\ncompare formats on your own hardware before committing to one.\n\n```bash\npython -m demopkg.bench --rows 100000 --format parquet --output /tmp/bench\n```\n\n| Flag | Default | Description |\n|---|---|---|\n| `--rows` | `100000` | Number of rows to generate for the benchmark. |\n| `--format` | `parquet` | Export format under test: `csv` or `parquet`. |\n| `--output` | `/tmp/bench` | Directory where intermediate files are written. |\n\nThe command prints elapsed time and rows/sec. Results depend heavily on disk\nspeed, so run the benchmark at least three times and keep the median.\n",
+    "must_include": [
+      "python -m demopkg.bench",
+      "--rows",
+      "--format",
+      "rows/sec"
+    ],
+    "must_not_include": [
+      "--threads",
+      "pytest-benchmark"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "needs_illustration"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "CLI-документация требует точного перечисления флагов и значений по умолчанию — хорошая проверка faithfulness.",
+  "raw_patch": null
+}

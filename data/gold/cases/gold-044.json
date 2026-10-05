@@ -1,0 +1,58 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-044",
+  "category": "bootstrap",
+  "expected_behavior": "escalate_bootstrap",
+  "trigger_kind": [
+    "adr_new"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "bootstrap_scan",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Bootstrap Stage 4 — скелеты ADR по кандидатам"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/storage/",
+      "demopkg/llm/backend.py",
+      "pyproject.toml"
+    ],
+    "summary": "Bootstrap Stage 4: по структуре пакетов определены 3 кандидата на ADR, скелеты создаются без выдуманных решений.",
+    "diff": "# bootstrap scan (not a diff)\nadr_candidates:\n  1. storage abstraction (demopkg/storage/base.py, abc + factory)\n  2. llm backend via OpenAI-compatible client (demopkg/llm/backend.py)\n  3. checkpoint storage engine (demopkg/state/store.py, sqlite3)\ndecision_evidence: code structure only, no commit messages available\n"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/adr/README.md",
+      "docs/adr/0001-template.md"
+    ],
+    "target_section": "Скелеты ADR",
+    "human_written_text": "# Архитектурные решения (ADR)\n\nШаблон записи: **Контекст / Решение / Последствия**. Статусы: `предложен`,\n`принят`, `изменён NNNN`, `отклонён`.\n\nКандидаты на заполнение (по структуре кода, решения не подтверждены):\n\n| Номер | Тема | Признак в коде |\n|---|---|---|\n| 0002 | Абстракция слоя хранения | `StorageBackend` + фабрика `create_backend` |\n| 0003 | LLM-бэкенд через OpenAI-совместимый API | `OPENAI_BASE_URL`, отсутствие прямой зависимости от бэкенда |\n| 0004 | Движок чекпоинтов состояния | `sqlite3`, интерфейс `load_state` |\n\nТекст решений заполняется вручную или агентом по мере появления соответствующих PR.\n",
+    "must_include": [
+      "Контекст",
+      "Решение",
+      "Последствия",
+      "Кандидаты"
+    ],
+    "must_not_include": [
+      "потому что команда выбрала",
+      "мотивация отказа от"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "hard_for_small_model"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Самый опасный bootstrap-кейс: модель обязана НЕ выдумывать мотивацию решений. must_not_include запрещает причинные формулировки — детектируется детерминированным матчером.",
+  "raw_patch": null
+}

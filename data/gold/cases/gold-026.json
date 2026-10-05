@@ -1,0 +1,47 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-026",
+  "category": "internal_refactor",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Type hints без изменения контракта"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/client.py",
+      "demopkg/exporters.py"
+    ],
+    "summary": "Добавлены аннотации типов и from __future__ import annotations; рантайм-поведение идентично.",
+    "diff": "--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -1,4 +1,5 @@\n+from __future__ import annotations\n import requests\n@@ -30,7 +31,7 @@ class APIClient:\n-    def fetch_records(self, endpoint, timeout, limit=100):\n+    def fetch_records(self, endpoint: str, timeout: float, limit: int = 100) -> list[dict]:\n--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -10,7 +11,7 @@\n-def export_to_csv(df, path, sep=\",\"):\n+def export_to_csv(df: pd.DataFrame, path: str, sep: str = \",\") -> None:\n",
+    "public_api_impact": "none"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative",
+    "multi_file"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Сигнатуры 'изменились' текстово, но не семантически. Тестируем способность отличить типизацию от смены API — один из самых частых источников ложных срабатываний.",
+  "raw_patch": null
+}

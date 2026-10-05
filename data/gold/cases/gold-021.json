@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-021",
+  "category": "typo_fix",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/tensorflow/docs/pull/128320 (исправление опечаток в API reference)",
+    "reference": "Орфография в README"
+  },
+  "code_change": {
+    "files": [
+      "README.md"
+    ],
+    "summary": "Исправлены две опечатки в тексте README, смысл и API не изменились.",
+    "diff": "--- a/README.md\n+++ b/README.md\n@@ -12,7 +12,7 @@\n-Демонстрационный паке для работы с данными.\n+Демонстрационный пакет для работы с данными.\n@@ -30,7 +30,7 @@\n-Установка выполяется через pip.\n+Установка выполняется через pip.\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative",
+    "noise"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Anti-spam кейс высшего приоритета: система не должна плодить PR ради опечаток. Порог: diff < 5 строк и только текст.",
+  "raw_patch": null
+}

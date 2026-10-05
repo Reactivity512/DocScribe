@@ -1,0 +1,60 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-007",
+  "category": "feature_doc",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "new_user_feature"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/tensorflow/docs/pull/128355 (добавление примеров TensorFlow Lite)",
+    "reference": "Новая пользовательская возможность с runnable-примером"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/inference.py",
+      "examples/image_classify.py"
+    ],
+    "summary": "Добавлен класс ImageClassifier для локального инференса; приложен runnable-пример.",
+    "diff": "--- a/demopkg/inference.py\n+++ b/demopkg/inference.py\n@@ new file mode 100644\n+class ImageClassifier:\n+    \"\"\"Локальная классификация изображений по модели ONNX.\"\"\"\n+\n+    def __init__(self, model_path, labels_path):\n+        ...\n+\n+    def predict(self, image, top_k=3):\n+        \"\"\"Вернуть top_k пар (метка, вероятность).\"\"\"\n+        ...\n--- a/examples/image_classify.py\n+++ b/examples/image_classify.py\n@@ new file mode 100644\n+from demopkg.inference import ImageClassifier\n+clf = ImageClassifier(\"model.onnx\", \"labels.txt\")\n+print(clf.predict(\"cat.jpg\", top_k=2))\n",
+    "public_api_impact": "added"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/guide/inference.md"
+    ],
+    "target_section": "Классификация изображений",
+    "human_written_text": "## Классификация изображений\n\nМодуль `demopkg.inference` позволяет запускать модель ONNX локально, без сервера.\n\n```python\nfrom demopkg.inference import ImageClassifier\n\nclf = ImageClassifier(\"model.onnx\", \"labels.txt\")\nfor label, score in clf.predict(\"cat.jpg\", top_k=2):\n    print(f\"{label}: {score:.2f}\")\n```\n\nШаги подготовки:\n\n1. Экспортируйте модель в формат ONNX и сохраните файл меток `labels.txt`\n   (по одной метке на строку, порядок соответствует выходным индексам модели).\n2. Создайте `ImageClassifier(model_path, labels_path)`.\n3. Вызовите `predict(image, top_k=...)`, где `image` — путь к файлу или объект `PIL.Image.Image`.\n\n`predict` возвращает список пар `(метка, вероятность)` длиной не более `top_k`,\nотсортированный по убыванию вероятности.\n",
+    "must_include": [
+      "ImageClassifier",
+      "predict",
+      "top_k",
+      "model.onnx",
+      "labels.txt"
+    ],
+    "must_not_include": [
+      "tf.lite.Interpreter",
+      "batch_predict",
+      "GPU delegate"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "needs_illustration",
+    "hard_for_small_model"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Главный 'красивый' кейс для демо: эталон содержит код-пример и нумерованные шаги. Для 3b-модели сложный — ожидаем низкий LLM-judge балл и фиксируем это как риск.",
+  "raw_patch": null
+}

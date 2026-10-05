@@ -1,0 +1,46 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-035",
+  "category": "style_format_only",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Lint-only правки"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/inference.py"
+    ],
+    "summary": "Исправлены lint-замечания: неиспользуемый импорт удалён, f-string без плейсхолдеров упрощён.",
+    "diff": "--- a/demopkg/inference.py\n+++ b/demopkg/inference.py\n@@ -1,7 +1,6 @@\n import numpy as np\n-import os\n@@ -33,7 +32,7 @@ class ImageClassifier:\n-        msg = f\"no labels\"\n+        msg = \"no labels\"\n",
+    "public_api_impact": "none"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative",
+    "noise"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Изменение строк есть, контракта нет. Классический шум.",
+  "raw_patch": null
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-003",
+  "category": "api_change",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "api_removed",
+    "breaking_change"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Удаление публичной функции: правка API-ref + заметка в migration guide"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/utils/deprecated.py",
+      "demopkg/__init__.py"
+    ],
+    "summary": "Удалена публичная функция normalize_strings(), ранее публиковавшаяся через demopkg.__all__.",
+    "diff": "--- a/demopkg/__init__.py\n+++ b/demopkg/__init__.py\n@@ -4,7 +4,6 @@ from .client import APIClient\n from .exporters import export_to_csv\n-from .utils.deprecated import normalize_strings\n \n-__all__ = [\"APIClient\", \"export_to_csv\", \"normalize_strings\"]\n+__all__ = [\"APIClient\", \"export_to_csv\"]\n--- a/demopkg/utils/deprecated.py\n+++ /dev/null\n@@ -1,9 +0,0 @@\n-def normalize_strings(df, columns, lower=True):\n-    \"\"\"Deprecated: use demopkg.text.clean instead.\"\"\"\n-    ...\n",
+    "public_api_impact": "removed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/api-reference.md",
+      "docs/migration.md"
+    ],
+    "target_section": "Удалённые символы",
+    "human_written_text": "### Удалённые символы\n\nФункция `normalize_strings()` удалена из публичного API (`demopkg.__all__`).\n\nЗамена — `demopkg.text.clean(df, columns, lower=True)`. Отличие: `clean`\nне изменяет DataFrame на месте, а возвращает копию, поэтому код вида\n`normalize_strings(df, [\"name\"])` нужно переписать как\n`df = clean(df, [\"name\"])`.\n\nПоддержка старого имени прекращена, алиасы не сохраняются.\n",
+    "must_include": [
+      "normalize_strings",
+      "demopkg.text.clean",
+      "возвращает копию"
+    ],
+    "must_not_include": [
+      "deprecated до v1.0",
+      "aliased"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "multi_file",
+    "breaking"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Тест на два файла документации одновременно и на указание замены, а не просто 'удалено'.",
+  "raw_patch": null
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-043",
+  "category": "bootstrap",
+  "expected_behavior": "escalate_bootstrap",
+  "trigger_kind": [
+    "api_new"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "bootstrap_scan",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Bootstrap Stage 3 — API reference по чанку из одного модуля"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/exporters.py"
+    ],
+    "summary": "Bootstrap Stage 3: чанк API reference по одному модулю (exporters), 3 публичных символа.",
+    "diff": "# bootstrap scan (not a diff)\nmodule: demopkg.exporters\npublic_symbols:\n  export_to_csv(df, path, sep=\",\")\n  export_to_parquet(df, path, compression=\"snappy\")\n  iter_export_chunks(df, chunksize=10_000)\ndocstrings: present for all 3\nexisting_section: none\n"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/api-reference.md"
+    ],
+    "target_section": "Module demopkg.exporters",
+    "human_written_text": "## `demopkg.exporters`\n\n| Function | Signature | Purpose |\n|---|---|---|\n| `export_to_csv` | `(df, path, sep=\",\")` | Write a DataFrame as delimited text. |\n| `export_to_parquet` | `(df, path, compression=\"snappy\")` | Write a DataFrame as Parquet. |\n| `iter_export_chunks` | `(df, chunksize=10_000)` | Yield row chunks for streaming export. |\n\nAll exporters accept a `pandas.DataFrame` and write to `path`; they return\n`None` except `iter_export_chunks`, which is a generator.\n",
+    "must_include": [
+      "demopkg.exporters",
+      "export_to_csv",
+      "export_to_parquet",
+      "iter_export_chunks"
+    ],
+    "must_not_include": [
+      "export_to_json",
+      "export_to_excel",
+      "engine='fastparquet'"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "hard_for_small_model"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Ключевой кейс против галлюцинаций: must_not_include содержит функции, которых в модуле нет, но которые модель часто додумывает по аналогии.",
+  "raw_patch": null
+}

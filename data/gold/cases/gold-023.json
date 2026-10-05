@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-023",
+  "category": "typo_fix",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/QGIS/QGIS-Documentation/pull/7934 (исправление опечаток в руководстве пользователя)",
+    "reference": "Пунктуация и орфография в prose-документации"
+  },
+  "code_change": {
+    "files": [
+      "docs/guide/getting-started.md"
+    ],
+    "summary": "Расстановка запятых и исправление 'так-же' -> 'так же' в руководстве.",
+    "diff": "--- a/docs/guide/getting-started.md\n+++ b/docs/guide/getting-started.md\n@@ -20,7 +20,7 @@\n-После установки так-же нужно проверить, что токен задан\n+После установки, так же нужно проверить, что токен задан\n@@ -44,7 +44,7 @@\n-Запрос отправляеться автоматически\n+Запрос отправляется автоматически\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative",
+    "noise"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Пограничный: правки в самой docs/. Правило — не комментировать чисто орфографические изменения независимо от того, где они сделаны.",
+  "raw_patch": null
+}

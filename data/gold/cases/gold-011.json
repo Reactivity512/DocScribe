@@ -1,0 +1,62 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-011",
+  "category": "adr_impact",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "adr_new",
+    "dependency_added"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Новое архитектурное решение: требуется запись ADR"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/storage/base.py",
+      "demopkg/storage/local.py",
+      "pyproject.toml"
+    ],
+    "summary": "Введён слой хранилища с интерфейсом StorageBackend; выбор бэкенда через фабрику.",
+    "diff": "--- a/demopkg/storage/base.py\n+++ b/demopkg/storage/base.py\n@@ new file mode 100644\n+class StorageBackend(abc.ABC):\n+    @abc.abstractmethod\n+    def put(self, key, payload): ...\n+    @abc.abstractmethod\n+    def get(self, key): ...\n--- a/demopkg/storage/__init__.py\n+++ b/demopkg/storage/__init__.py\n+def create_backend(name=\"local\"):\n+    \"\"\"Return a StorageBackend implementation by name.\"\"\"\n+    return LOCAL_BACKENDS[name]()\n",
+    "public_api_impact": "added"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/adr/0004-storage-backend-abstraction.md"
+    ],
+    "target_section": "ADR-0004",
+    "human_written_text": "# ADR 0004. Абстракция слоя хранения\n\nДата: 2026-10-05  \nСтатус: принят\n\n## Контекст\n\nПакет писался с предположением, что данные всегда лежат на локальном диске.\nПоявились требования хранить артефакты в объектном хранилище, и прямые вызовы\n`open()` начали дублироваться в модуле экспорта и в кэше.\n\n## Решение\n\nВводится интерфейс `StorageBackend` (`put`, `get`) и фабрика\n`create_backend(name=\"local\")`. Вся работа с данными идёт только через\nабстракцию; конкретные реализации регистрируются в `LOCAL_BACKENDS`.\n\n## Последствия\n\n* (+) Локальный диск остаётся реализацией по умолчанию — обратная совместимость сохранена.\n* (+) Новый бэкенд добавляется без правок потребительского кода.\n* (-) Две дополнительные точки отказа: фабрика и реестр реализаций.\n* (-) Отладка усложняется: стек вызовов стал длиннее, чем при прямом `open()`.\n",
+    "must_include": [
+      "StorageBackend",
+      "create_backend",
+      "ADR",
+      "Контекст",
+      "Решение",
+      "Последствия"
+    ],
+    "must_not_include": [
+      "S3",
+      "grpc",
+      "микроcервис"
+    ]
+  },
+  "lang": "ru",
+  "labels": [
+    "positive",
+    "hard_for_small_model"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "ADR — самый сложный жанр для 3b: нужен баланс контекста и последствий. Ключевой кейс для LLM-judge rubric.",
+  "raw_patch": null
+}

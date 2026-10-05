@@ -1,0 +1,355 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docagent.local/schemas/gold_case_v1.json",
+  "title": "DocAgent Gold Case v1",
+  "description": "Эталонный кейс: diff PR -> ожидаемая документационная правка (ground truth от людей). Используется на шаге 6 (Eval) и как фикстуры на шагах 1-3.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "category",
+    "expected_behavior",
+    "trigger_kind",
+    "source",
+    "code_change",
+    "docs_change",
+    "lang",
+    "labels"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "gold-v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^gold-[0-9]{3}$",
+      "description": "Уникальный ID кейса внутри набора."
+    },
+    "category": {
+      "enum": [
+        "api_change",
+        "feature_doc",
+        "adr_impact",
+        "readme_update",
+        "typo_fix",
+        "internal_refactor",
+        "ci_test_only",
+        "style_format_only",
+        "docs_only",
+        "bootstrap"
+      ]
+    },
+    "expected_behavior": {
+      "enum": [
+        "write_docs",
+        "stay_silent",
+        "escalate_bootstrap"
+      ],
+      "description": "Целевое поведение агента."
+    },
+    "trigger_kind": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": [
+          "api_new",
+          "api_signature_changed",
+          "api_removed",
+          "behavior_changed",
+          "adr_new",
+          "adr_changed",
+          "dependency_added",
+          "config_or_env_changed",
+          "breaking_change",
+          "new_user_feature",
+          "none"
+        ]
+      }
+    },
+    "severity": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "kind",
+        "repo",
+        "reference"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "github_pr",
+            "synthetic",
+            "bootstrap_scan"
+          ]
+        },
+        "repo": {
+          "type": "string"
+        },
+        "pr_number": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "pr_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reference": {
+          "type": "string"
+        },
+        "donor_reference": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Ссылка на реальный PR донора (TF/QGIS), если кейс смоделирован по нему."
+        }
+      }
+    },
+    "code_change": {
+      "type": "object",
+      "required": [
+        "files",
+        "summary",
+        "diff"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "summary": {
+          "type": "string"
+        },
+        "diff": {
+          "type": "string"
+        },
+        "public_api_impact": {
+          "enum": [
+            "added",
+            "changed",
+            "removed",
+            "none"
+          ]
+        }
+      }
+    },
+    "docs_change": {
+      "type": "object",
+      "required": [
+        "change_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "change_type": {
+          "enum": [
+            "add",
+            "update",
+            "fix_typos",
+            "rewrite",
+            "none"
+          ]
+        },
+        "target_files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "target_section": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "human_written_text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "must_include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "must_not_include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "lang": {
+      "enum": [
+        "ru",
+        "en"
+      ]
+    },
+    "labels": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": [
+          "negative",
+          "positive",
+          "edge",
+          "noise",
+          "multi_file",
+          "breaking",
+          "needs_illustration",
+          "hard_for_small_model"
+        ]
+      }
+    },
+    "annotator": {
+      "type": "object",
+      "required": [
+        "by",
+        "reviewed_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "by": {
+          "type": "string"
+        },
+        "reviewed_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "date": {
+          "type": "string"
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "raw_patch": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Имя файла полного патча в data/gold/raw/ (опционально)."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "expected_behavior": {
+            "const": "stay_silent"
+          }
+        },
+        "required": [
+          "expected_behavior"
+        ]
+      },
+      "then": {
+        "properties": {
+          "trigger_kind": {
+            "items": {
+              "const": "none"
+            }
+          },
+          "docs_change": {
+            "properties": {
+              "change_type": {
+                "const": "none"
+              },
+              "human_written_text": {
+                "type": "null"
+              },
+              "target_files": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "expected_behavior": {
+            "const": "write_docs"
+          }
+        },
+        "required": [
+          "expected_behavior"
+        ]
+      },
+      "then": {
+        "properties": {
+          "docs_change": {
+            "required": [
+              "target_files",
+              "human_written_text",
+              "must_include"
+            ],
+            "properties": {
+              "target_files": {
+                "minItems": 1
+              },
+              "human_written_text": {
+                "type": "string",
+                "minLength": 40
+              },
+              "change_type": {
+                "not": {
+                  "const": "none"
+                }
+              },
+              "must_include": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "enum": [
+              "api_change"
+            ]
+          }
+        },
+        "required": [
+          "category"
+        ]
+      },
+      "then": {
+        "properties": {
+          "code_change": {
+            "required": [
+              "public_api_impact"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

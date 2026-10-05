@@ -1,0 +1,57 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-002",
+  "category": "api_change",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "api_signature_changed",
+    "breaking_change"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": "https://github.com/tensorflow/docs/pull/128320 (правка API reference)",
+    "reference": "Изменение сигнатуры публичного метода + breaking change"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/client.py"
+    ],
+    "summary": "У fetch_records() изменён порядок аргументов и добавлен обязательный timeout; обратно несовместимо.",
+    "diff": "--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -31,7 +31,7 @@ class APIClient:\n-    def fetch_records(self, endpoint, limit=100):\n+    def fetch_records(self, endpoint, timeout, limit=100):\n         \"\"\"Fetch records from the given endpoint.\"\"\"\n         url = f\"{self.base_url}/{endpoint}\"\n-        resp = self.session.get(url, params={\"limit\": limit})\n+        resp = self.session.get(url, params={\"limit\": limit}, timeout=timeout)\n         resp.raise_for_status()\n         return resp.json()[\"items\"]\n",
+    "public_api_impact": "changed"
+  },
+  "docs_change": {
+    "change_type": "update",
+    "target_files": [
+      "docs/api-reference.md"
+    ],
+    "target_section": "APIClient.fetch_records",
+    "human_written_text": "#### APIClient.fetch_records(endpoint, timeout, limit=100)\n\nRetrieves a page of records from the API.\n\n> **Breaking change (v0.4):** the `timeout` argument is now required and\n> positioned before `limit`. Calls written as `fetch_records(\"users\", 50)`\n> must be updated to `fetch_records(\"users\", 5.0, limit=50)`.\n\n| Parameter | Type | Default | Description |\n|---|---|---|---|\n| `endpoint` | `str` | — | Resource path, e.g. `\"users\"`. |\n| `timeout` | `float` | — | Seconds to wait for a response. No default. |\n| `limit` | `int` | `100` | Maximum number of records per page. |\n\nRaises `requests.Timeout` when the deadline is exceeded.\n",
+    "must_include": [
+      "timeout",
+      "Breaking change",
+      "fetch_records",
+      "limit"
+    ],
+    "must_not_include": [
+      "max_retries",
+      "backoff"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "breaking"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Проверяем, что агент явно помечает ломающее изменение и показывает миграцию вызова. Ключевой кейс для recall метрики Trigger.",
+  "raw_patch": null
+}

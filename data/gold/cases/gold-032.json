@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-032",
+  "category": "ci_test_only",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "low",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Исправление нестабильного теста"
+  },
+  "code_change": {
+    "files": [
+      "tests/test_session.py"
+    ],
+    "summary": "Стабилизация flaky-теста: увеличен таймаут ожидания и добавлен seed.",
+    "diff": "--- a/tests/test_session.py\n+++ b/tests/test_session.py\n@@ -22,7 +22,8 @@ def test_session_reconnect():\n-    time.sleep(0.1)\n+    random.seed(42)\n+    time.sleep(1.0)\n     assert session.is_connected\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "en",
+  "labels": [
+    "negative",
+    "noise"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Ноль влияния на пользователя, несмотря на слово 'fix' в названии. Тестируем устойчивость к ключевым словам коммита.",
+  "raw_patch": null
+}

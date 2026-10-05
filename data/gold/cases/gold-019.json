@@ -1,0 +1,57 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-019",
+  "category": "readme_update",
+  "expected_behavior": "write_docs",
+  "trigger_kind": [
+    "new_user_feature",
+    "api_new"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Сводка релиза в README по данным CHANGELOG"
+  },
+  "code_change": {
+    "files": [
+      "CHANGELOG.md",
+      "demopkg/exporters.py"
+    ],
+    "summary": "Релиз 0.4.0: добавлены Parquet-экспорт и бенчмарк CLI — нужен раздел Release notes в README.",
+    "diff": "--- a/CHANGELOG.md\n+++ b/CHANGELOG.md\n@@ -1,5 +1,11 @@\n # Changelog\n+## 0.4.0 - 2026-10-05\n+### Added\n+- `export_to_parquet(df, path, compression=\"snappy\")`\n+- `python -m demopkg.bench` CLI\n+### Changed\n+- **Breaking**: `APIClient.fetch_records` now requires `timeout`\n"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "README.md"
+    ],
+    "target_section": "Release notes",
+    "human_written_text": "## Release notes — 0.4.0\n\nHighlights:\n\n* New Parquet exporter: `export_to_parquet(df, path, compression=\"snappy\")` —\n  smaller files than CSV and lossless column types.\n* New benchmark CLI: `python -m demopkg.bench --rows 100000 --format parquet`.\n* Breaking: `APIClient.fetch_records` now requires the `timeout` argument.\n\nThe full list of changes lives in `CHANGELOG.md`.\n",
+    "must_include": [
+      "0.4.0",
+      "export_to_parquet",
+      "demopkg.bench",
+      "Breaking"
+    ],
+    "must_not_include": [
+      "0.5.0",
+      "yanked"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "multi_file"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Агент обязан синхронизировать формулировки между CHANGELOG и README и не выдумывать следующий релиз.",
+  "raw_patch": null
+}

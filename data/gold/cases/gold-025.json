@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-025",
+  "category": "internal_refactor",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Рефакторинг внутреннего модуля _internal"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/_internal/parser.py"
+    ],
+    "summary": "Внутренний парсер разбит на приватные хелперы; публичные сигнатуры не менялись.",
+    "diff": "--- a/demopkg/_internal/parser.py\n+++ b/demopkg/_internal/parser.py\n@@ -14,12 +14,16 @@ def parse_response(raw):\n-    items = []\n-    for row in raw.splitlines():\n-        if not row.strip():\n-            continue\n-        items.append(row.split(\"\\t\"))\n-    return items\n+    return [cells for cells in (_split(row) for row in _nonempty_lines(raw))]\n+\n+\n+def _nonempty_lines(raw):\n+    return (line for line in raw.splitlines() if line.strip())\n+\n+\n+def _split(line):\n+    return line.split(\"\\t\")\n",
+    "public_api_impact": "none"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "ru",
+  "labels": [
+    "negative"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Папка _internal + все новые имена с подчеркиванием — эталонный negative для эвристики публичного API.",
+  "raw_patch": null
+}

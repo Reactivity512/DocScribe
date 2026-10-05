@@ -1,0 +1,45 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-022",
+  "category": "typo_fix",
+  "expected_behavior": "stay_silent",
+  "trigger_kind": [
+    "none"
+  ],
+  "severity": "high",
+  "source": {
+    "kind": "synthetic",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Опечатка в docstring"
+  },
+  "code_change": {
+    "files": [
+      "demopkg/exporters.py"
+    ],
+    "summary": "В docstring исправлено 'recieve' -> 'receive'; поведение функции не тронуто.",
+    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -8,7 +8,7 @@ def export_to_csv(df, path, sep=\",\"):\n-    \"\"\"Write a DataFrame and recieve the target path back.\"\"\"\n+    \"\"\"Write a DataFrame and receive the target path back.\"\"\"\n"
+  },
+  "docs_change": {
+    "change_type": "none",
+    "target_files": [],
+    "target_section": null,
+    "human_written_text": null,
+    "must_include": [],
+    "must_not_include": []
+  },
+  "lang": "en",
+  "labels": [
+    "negative",
+    "noise"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Даже если мы следим за docstring как источником для API-ref, одна орфографическая правка не повод создавать draft PR.",
+  "raw_patch": null
+}

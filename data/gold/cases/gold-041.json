@@ -1,0 +1,59 @@
+{
+  "schema_version": "gold-v1",
+  "id": "gold-041",
+  "category": "bootstrap",
+  "expected_behavior": "escalate_bootstrap",
+  "trigger_kind": [
+    "behavior_changed"
+  ],
+  "severity": "medium",
+  "source": {
+    "kind": "bootstrap_scan",
+    "repo": "demo-repo",
+    "pr_number": null,
+    "pr_url": null,
+    "donor_reference": null,
+    "reference": "Bootstrap Stage 5 — changelog по git log"
+  },
+  "code_change": {
+    "files": [
+      "docs/changelog.md",
+      "git_log: last 15 commits"
+    ],
+    "summary": "Bootstrap Stage 5: история изменений восстанавливается по git log; агент не знает дат релизов и оформляет их как кандидаты на подтверждение лидом.",
+    "diff": "# bootstrap scan (not a diff)\ngit_log_subjects (oldest first):\n  add APIClient with fetch_records\n  support timeout parameter in fetch_records\n  add export_to_parquet (snappy by default)\n  fix crash on empty DataFrame in export_to_csv\n  introduce StorageBackend abstraction\n  add retry policy with exponential backoff\nunreleased_commits: 2 (storage abstraction, retry policy)\ntags: none\n"
+  },
+  "docs_change": {
+    "change_type": "add",
+    "target_files": [
+      "docs/changelog.md"
+    ],
+    "target_section": "Unreleased + ретроспектива",
+    "human_written_text": "# Changelog\n\nAll notable changes to `demopkg` are documented here.\nFormat loosely follows Keep a Changelog; versions were not tagged in git,\nso historical grouping below is **proposed** and needs maintainer approval.\n\n## [Unreleased]\n\n### Added\n- `StorageBackend` abstraction with pluggable implementations.\n- Retry policy with exponential backoff for transient API failures.\n\n## Proposed 0.3.0\n- Added `timeout` parameter to `fetch_records`.\n- Added `export_to_parquet` (Snappy compression by default).\n\n## Proposed 0.2.0\n- Fixed crash on empty DataFrame in `export_to_csv`.\n\n## Proposed 0.1.0\n- Initial `APIClient` with `fetch_records`.\n",
+    "must_include": [
+      "[Unreleased]",
+      "Proposed",
+      "export_to_parquet",
+      "StorageBackend"
+    ],
+    "must_not_include": [
+      "2024-",
+      "2025-",
+      "2026-",
+      "Breaking release 1.0"
+    ]
+  },
+  "lang": "en",
+  "labels": [
+    "positive",
+    "edge",
+    "hard_for_small_model"
+  ],
+  "annotator": {
+    "by": "team",
+    "reviewed_by": null,
+    "date": "2026-10-05"
+  },
+  "notes": "Последний stage (после 3 и 4, когда есть docs/). Ключевое ограничение: тегов в git нет, поэтому агент помечает группы как 'Proposed' и никогда не ставит даты/номера релизов — must_not_include ловит год-паттерн и выдуманный мажорный релиз. Это проверка того, что bootstrap умеет честно заявлять неуверенность вместо уверенной галлюцинации.",
+  "raw_patch": null
+}
