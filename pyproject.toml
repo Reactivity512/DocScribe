@@ -25,5 +25,8 @@ docagent-mcp = "docagent.mcp_server.server:main"
 where = ["src"]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
+# asyncio_mode убран: плагин pytest-asyncio не входит в зависимости MVP,
+# а его отсутствие + этот ключ вызывал ошибку конфигурации.
+# -p no:libtmux — обход бага libtmux>=0.42 с pytest 9.x (mark на fixture).
+addopts = "-p no:libtmux"
 testpaths = ["tests"]
