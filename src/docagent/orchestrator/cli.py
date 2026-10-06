@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]  # src/docagent/orchestrator/cli.py -> корень репо
@@ -49,8 +50,16 @@ def main(argv=None):
     ap.add_argument("--lang", default=None, choices=["ru", "en"])
     ap.add_argument("--auto-approve", action="store_true",
                     help="автоматически approve при interrupt (для e2e-демо/тестов)")
+    ap.add_argument("--once", action="store_true",
+                    help="не чистить thread: прогнать кейс один раз (иначе --gold "
+                         "кейсы переиспользуют thread_id и статус-чейны склеиваются)")
     ap.add_argument("--resume", action="store_true", help="продолжить существующий thread")
     ap.add_argument("--thread", help="thread_id для --resume")
+    ap.add_argument("--pr-ref", default="",
+                    help="ссылка на реальный PR (url или owner/repo#N) — нужна ноде "
+                         "publish при DOCAGENT_PUBLISH_TARGET=github; без неё публикация "
+                         "ушла бы в base-репозиторий и GitHub вернул бы "
+                         "'No commits between main and <branch>'")
     ap.add_argument("--decision", default="approve",
                     choices=["approve", "reject", "changes"])
     ap.add_argument("--feedback", default="")
@@ -58,6 +67,11 @@ def main(argv=None):
 
     graph, cleanup = compile_pipeline()
     cfg = {"configurable": {"thread_id": args.thread or "run-1"}}
+
+    if not args.resume and not args.once:
+        # новый запуск того же кейса = новый тред (иначе статус-чейны накапливаются
+        # поверх старого чекпоинта pr-<id>)
+        cfg["configurable"]["thread_id"] += f"-{int(time.time())}"
 
     if args.resume:
         if not args.thread:
@@ -71,7 +85,7 @@ def main(argv=None):
         diff = _load_gold_diff(args.gold) if args.gold else \
             Path(args.diff).read_text(encoding="utf-8")
         state_in = {
-            "pr_ref": args.gold or args.diff,
+            "pr_ref": args.pr_ref or args.gold or args.diff,
             "diff_text": diff,
             "backend_name": args.backend,
             "lang": args.lang or "",

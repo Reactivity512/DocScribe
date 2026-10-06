@@ -236,13 +236,26 @@ def escalate_manual(state: OrchState) -> dict:
 
 # --------------------------------------------------------------------------
 def publish(state: OrchState) -> dict:
-    """Единственная side-effect нода. Шаг 3: запись payload в outbox (JSON).
-    Шаг 4: здесь появится создание ветки/коммита/draft PR через GitHub API."""
+    """Единственная side-effect нода.
+
+    Режимы (env DOCAGENT_PUBLISH_TARGET):
+      outbox  — шаг 3: запись payload в data/outbox/<thread>.json (дефолт, для тестов);
+      github  — шаг 4: создание ветки/коммита/draft PR через GitHub API.
+    Контракт payload не меняется между режимами.
+    """
     t0 = time.monotonic()
     s = get_settings()
+    tid = re.sub(r"[^A-Za-z0-9_.-]", "_", state.get("thread_id", "run"))
+
+    if getattr(s, "publish_target", "outbox") == "github":
+        from ..github_int.publisher import publish_to_github
+        result = publish_to_github(state, s)
+        return {**result, "status": ["published"],
+                "events": [_ev("publish", t0, **{k: v for k, v in result.items()
+                                                 if k != "status"})]}
+
     outbox = Path(s.outbox_dir)
     outbox.mkdir(parents=True, exist_ok=True)
-    tid = re.sub(r"[^A-Za-z0-9_.-]", "_", state.get("thread_id", "run"))
     path = outbox / f"{tid}.json"
     record = {
         "payload": state.get("payload", {}),

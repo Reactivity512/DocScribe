@@ -1,0 +1,239 @@
+From c64b25ec7364d4b0466f0b376d1362565d2da48c Mon Sep 17 00:00:00 2001
+From: "qwen.ai[bot]" <qwenlm-intl@service.alibaba.com>
+Date: Tue, 6 Oct 2026 18:26:06 +0000
+Subject: [PATCH 3/4] Fix 'No commits between main and <branch>': create commit
+ first, reset branch ref to HEAD, explicit pr_ref passthrough, clear error on
+ empty diff
+
+---
+ src/docagent/github_int/cli.py       |  5 +-
+ src/docagent/github_int/publisher.py | 45 ++++++++++++--
+ src/docagent/orchestrator/cli.py     |  7 ++-
+ tests/github_int/test_github_int.py  | 92 ++++++++++++++++++++++++++--
+ 4 files changed, 136 insertions(+), 13 deletions(-)
+
+diff --git a/src/docagent/github_int/cli.py b/src/docagent/github_int/cli.py
+index 4941aa1..65be338 100644
+--- a/src/docagent/github_int/cli.py
++++ b/src/docagent/github_int/cli.py
+@@ -66,7 +66,10 @@ def cmd_run(args):
+     tmp = REPO / "data" / "work" / f"{args.repo.replace('/', '_')}-pr{args.pr}.diff"
+     tmp.parent.mkdir(parents=True, exist_ok=True)
+     tmp.write_text(diff, encoding="utf-8")
+-    argv = ["--diff", str(tmp), "--backend", args.backend]
++    # pr_ref обязателен для github-publish: без него _repo_slug падает на
++    # demo_repo и ветка сливается с main -> "No commits between main and ..."
++    argv = ["--diff", str(tmp), "--backend", args.backend,
++            "--pr-ref", f"https://github.com/{args.repo}/pull/{args.pr}"]
+     if args.auto_approve:
+         argv.append("--auto-approve")
+     return orch_main(argv)
+diff --git a/src/docagent/github_int/publisher.py b/src/docagent/github_int/publisher.py
+index 9359909..f8c2ff0 100644
+--- a/src/docagent/github_int/publisher.py
++++ b/src/docagent/github_int/publisher.py
+@@ -52,23 +52,56 @@ def publish_to_github(state: dict, s: Settings, client: GitHubClient | None = No
+     tid = re.sub(r"[^A-Za-z0-9_.-]", "_", state.get("thread_id", "run"))
+     branch = f"{s.bot_branch_prefix}{tid}"
+ 
++    repo_obj = c.repo(slug)
++    branch_ref_sha = None
++    try:  # существующая ветка этого же треда => ОБНОВЛЕНИЕ PR, а не новый PR
++        branch_ref_sha = repo_obj.get_git_ref(f"heads/{branch}").object.sha
++    except Exception:
++        pass
++
+     files_out = []
+     for f in payload.get("files", []):
+         existing = None
++        # при апдейте сравниваем с версией на НАШЕЙ ветке (её уже мержили в
++        # main? нет; но предыдущий пуш именно туда), иначе — с base
++        cmp_ref = {"ref": branch_ref_sha} if branch_ref_sha else {}
+         try:
+-            existing = c.repo(slug).get_content(f["path"]).decoded_content.decode()
++            existing = repo_obj.get_content(f["path"], **cmp_ref).decoded_content.decode()
+         except Exception:
+-            pass  # файла нет — создадим
+-        files_out.append({"path": f["path"],
+-                          "content": render_doc_file(existing, f)})
++            try:
++                existing = repo_obj.get_content(f["path"]).decoded_content.decode()
++            except Exception:
++                pass  # файла нет нигде — создадим
++        new_content = render_doc_file(existing, f)
++        if existing is not None and new_content == existing:
++            continue  # контент идентичен текущему состоянию цели коммита
++        files_out.append({"path": f["path"], "content": new_content})
++
++    if not files_out:
++        raise RuntimeError(
++            f"publish skipped: nothing to commit on top of {'branch ' + branch_ref_sha[:8] if branch_ref_sha else 'main'} "
++            f"in {slug} (thread={tid}). GitHub отклонил бы такой PR ошибкой "
++            "'No commits between main and <branch>'. Причины: 1) файлы docs/ из "
++            "предыдущего draft PR'а были смержены в main руками; 2) бот уже "
++            "публиковал идентичный черновик. Исправление: закройте старый PR и "
++            "удалите ветку docagent/<thread>, либо откатите docs/ из main.")
+ 
+-    base_sha = c.repo(slug).get_branch("main").commit.sha
+-    c.create_blob_commit(slug, branch, base_sha, files_out,
++    # parent коммита: если ветка уже существует (ревью-правки / повторный пуск) —
++    # поверх её HEAD (получаем непустой diff и апдейт того же PR); иначе — main.
++    parent_sha = branch_ref_sha or repo_obj.get_branch("main").commit.sha
++    c.create_blob_commit(slug, branch, parent_sha, files_out,
+                          payload.get("commit_message", "docs: auto"))
+     title = f"Docs: {payload.get('pr_ref', tid)}"
+     body = payload.get("body_md", "")
+     if payload.get("needs_human_edit"):
+         body += "\n\nneeds_human_edit\n"
++    if branch_ref_sha:  # PR по этой ветке уже открыт — new pull would 422 duplicate
++        prs = list(repo_obj.get_pulls(state="all", head=f"{slug.split('/')[0]}:{branch}"))
++        if prs:
++            pr = prs[0]
++            pr.edit(title=title, body=body)
++            return {"pr_number": pr.number, "pr_url": pr.html_url,
++                    "publish_mode": "github", "updated": True}
+     res = c.open_draft_pr(slug, branch, title, body)
+     return {"pr_number": res["number"], "pr_url": res["html_url"],
+             "publish_mode": "github"}
+diff --git a/src/docagent/orchestrator/cli.py b/src/docagent/orchestrator/cli.py
+index c4e0d36..1e24c86 100644
+--- a/src/docagent/orchestrator/cli.py
++++ b/src/docagent/orchestrator/cli.py
+@@ -55,6 +55,11 @@ def main(argv=None):
+                          "кейсы переиспользуют thread_id и статус-чейны склеиваются)")
+     ap.add_argument("--resume", action="store_true", help="продолжить существующий thread")
+     ap.add_argument("--thread", help="thread_id для --resume")
++    ap.add_argument("--pr-ref", default="",
++                    help="ссылка на реальный PR (url или owner/repo#N) — нужна ноде "
++                         "publish при DOCAGENT_PUBLISH_TARGET=github; без неё публикация "
++                         "ушла бы в base-репозиторий и GitHub вернул бы "
++                         "'No commits between main and <branch>'")
+     ap.add_argument("--decision", default="approve",
+                     choices=["approve", "reject", "changes"])
+     ap.add_argument("--feedback", default="")
+@@ -80,7 +85,7 @@ def main(argv=None):
+         diff = _load_gold_diff(args.gold) if args.gold else \
+             Path(args.diff).read_text(encoding="utf-8")
+         state_in = {
+-            "pr_ref": args.gold or args.diff,
++            "pr_ref": args.pr_ref or args.gold or args.diff,
+             "diff_text": diff,
+             "backend_name": args.backend,
+             "lang": args.lang or "",
+diff --git a/tests/github_int/test_github_int.py b/tests/github_int/test_github_int.py
+index 4723265..00a7879 100644
+--- a/tests/github_int/test_github_int.py
++++ b/tests/github_int/test_github_int.py
+@@ -100,7 +100,7 @@ class FakePublishRepo:
+         self.created_branches = []
+         self.prs = []
+ 
+-    def get_content(self, path):
++    def get_content(self, path, ref=None):
+         from github import GithubException
+         raise GithubException(404, {}, None)
+ 
+@@ -108,10 +108,12 @@ class FakePublishRepo:
+         class B: commit = type("C", (), {"sha": self.branch_sha})()
+         return B()
+ 
+-    def get_git_ref(self, ref): 
+-        class R:
+-            def edit(_self, sha, force=False): pass
+-        return R()
++    def get_git_ref(self, ref):
++        from github import GithubException
++        raise GithubException(404, {}, None)  # ветки нет — первый publish
++
++    def get_pulls(self, state="open", head=None):
++        return []
+ 
+     def get_git_commit(self, sha):
+         class T: pass
+@@ -172,3 +174,83 @@ def test_publish_to_github_flow(monkeypatch):
+     assert kw["draft"] is True                      # только draft PR
+     assert kw["head"] == "docagent/pr-demo-1"        # идемпотентная ветка по thread
+     assert "Docs:" in kw["title"]
++
++
++def test_publish_empty_diff_raises(monkeypatch):
++    """Регрессия на 'No commits between main and <branch>': если контент
++    черновика уже в файле — publish обязан упасть с внятной ошибкой, а не
++    создавать пустой PR."""
++    from docagent.config import Settings
++    from docagent.github_int import publisher
++
++    class ExistingContentRepo(FakePublishRepo):
++        """main уже содержит точно такой же блок -> files_out пуст."""
++        def get_content(self, path, ref=None):
++            existing_main = (
++                "# Api Reference\n\n"
++                "_Сгенерировано DocAgent (черновик, до одобрения team lead)._ \n\n"
++                "## DocAgent · api-reference\n\ntext about Client\n")
++            return type("R", (), {"decoded_content": existing_main.encode()})()
++
++    class C:
++        def repo(self, slug): return ExistingContentRepo()
++        def create_blob_commit(self, *a, **k): raise AssertionError("must not commit")
++        # ветки нет (FakePublishRepo.get_git_ref -> 404), контент совпадает с main
++        def open_draft_pr(self, *a, **k): raise AssertionError("must not open PR")
++
++    s = Settings(publish_target="github")
++    state = {
++        "thread_id": "pr-demo-1",
++        "payload": {
++            "pr_ref": "https://github.com/foo/bar/pull/1",
++            "files": [{"path": "docs/api-reference.md", "target": "api-reference",
++                       "content_md": "text about Client", "action": "append"}],
++        },
++    }
++    import pytest
++    with pytest.raises(RuntimeError, match="nothing to commit"):
++        publisher.publish_to_github(state, s, client=C())
++
++
++def test_publish_updates_existing_branch_pr():
++    """Регрессия на 'No commits between main and <branch>' при ревью-правках:
++    если ветка треда уже существует — коммит поверх её HEAD (не поверх main),
++    PR обновляется, дубль не создаётся."""
++    from docagent.config import Settings
++    from docagent.github_int import publisher
++
++    class BranchExistsRepo(FakePublishRepo):
++        def get_git_ref(self, ref):
++            o = type("O", (), {"sha": "branchhead123"})()
++            return type("R", (), {"object": o})()
++        def get_pulls(self, state="open", head=None):
++            pr = type("P", (), {"number": 42, "html_url": "https://github.com/foo/bar/pull/42",
++                                "edit": lambda self, **kw: None})()
++            self.edited = kw if False else None
++            return [pr]
++
++    captured = {}
++    class C(FakePublishClient):
++        def __init__(self):
++            self.repo_obj = BranchExistsRepo()
++        def create_blob_commit(self, slug, branch, base_ref, files, message):
++            captured["parent"] = base_ref
++            captured["files"] = files
++            return "newcommit"
++        def open_draft_pr(self, *a, **k):
++            raise AssertionError("must not open duplicate PR")
++
++    s = Settings(publish_target="github")
++    state = {
++        "thread_id": "pr-demo-1",
++        "payload": {
++            "pr_ref": "https://github.com/foo/bar/pull/1",
++            "commit_message": "docs: v2 after review",
++            "body_md": "## body v2",
++            "files": [{"path": "docs/api-reference.md", "target": "api-reference",
++                       "content_md": "UPDATED text about Client", "action": "append"}],
++        },
++    }
++    res = publisher.publish_to_github(state, s, client=C())
++    assert captured["parent"] == "branchhead123"   # parent = HEAD ветки, не main
++    assert res["updated"] is True and res["pr_number"] == 42
+-- 
+2.39.5
+
