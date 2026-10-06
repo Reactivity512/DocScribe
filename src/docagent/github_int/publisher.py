@@ -68,10 +68,10 @@ def publish_to_github(state: dict, s: Settings, client: GitHubClient | None = No
         # main? нет; но предыдущий пуш именно туда), иначе — с base
         cmp_ref = {"ref": branch_ref_sha} if branch_ref_sha else {}
         try:
-            existing = repo_obj.get_content(f["path"], **cmp_ref).decoded_content.decode()
+            existing = repo_obj.get_contents(f["path"], **cmp_ref).decoded_content.decode()
         except Exception:
             try:
-                existing = repo_obj.get_content(f["path"]).decoded_content.decode()
+                existing = repo_obj.get_contents(f["path"]).decoded_content.decode()
             except Exception:
                 pass  # файла нет нигде — создадим
         new_content = render_doc_file(existing, f)

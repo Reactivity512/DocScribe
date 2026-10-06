@@ -61,7 +61,7 @@ class FakeContentErr(Exception):
 
 class FakeRepo:
     """README уже есть в репо, остального нет."""
-    def get_content(self, path):
+    def get_contents(self, path):
         from github import GithubException
         if path == "README.md":
             return object()
@@ -100,7 +100,7 @@ class FakePublishRepo:
         self.created_branches = []
         self.prs = []
 
-    def get_content(self, path, ref=None):
+    def get_contents(self, path, ref=None):
         from github import GithubException
         raise GithubException(404, {}, None)
 
@@ -185,7 +185,7 @@ def test_publish_empty_diff_raises(monkeypatch):
 
     class ExistingContentRepo(FakePublishRepo):
         """main уже содержит точно такой же блок -> files_out пуст."""
-        def get_content(self, path, ref=None):
+        def get_contents(self, path, ref=None):
             existing_main = (
                 "# Api Reference\n\n"
                 "_Сгенерировано DocAgent (черновик, до одобрения team lead)._ \n\n"
