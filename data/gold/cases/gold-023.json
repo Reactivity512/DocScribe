@@ -20,7 +20,7 @@
       "docs/guide/getting-started.md"
     ],
     "summary": "Расстановка запятых и исправление 'так-же' -> 'так же' в руководстве.",
-    "diff": "--- a/docs/guide/getting-started.md\n+++ b/docs/guide/getting-started.md\n@@ -20,7 +20,7 @@\n-После установки так-же нужно проверить, что токен задан\n+После установки, так же нужно проверить, что токен задан\n@@ -44,7 +44,7 @@\n-Запрос отправляеться автоматически\n+Запрос отправляется автоматически\n"
+    "diff": "diff --git a/docs/guide/getting-started.md b/docs/guide/getting-started.md\n--- a/docs/guide/getting-started.md\n+++ b/docs/guide/getting-started.md\n@@ -20,1 +20,1 @@\n-После установки так-же нужно проверить, что токен задан\n+После установки, так же нужно проверить, что токен задан\n@@ -44,1 +44,1 @@\n-Запрос отправляеться автоматически\n+Запрос отправляется автоматически\n"
   },
   "docs_change": {
     "change_type": "none",

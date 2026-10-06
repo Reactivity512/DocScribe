@@ -1,0 +1,498 @@
+{
+  "metrics": {
+    "backend": "ollama",
+    "n_write_docs_cases": 27,
+    "seconds": 254.2,
+    "silently_skipped_by_rules": 7,
+    "drafts_produced_rate": 0.95,
+    "hallucination_free_rate": 0.5263,
+    "target_match_rate": 1.0,
+    "must_include_hit_rate": 0.8947,
+    "dropped_total": 2
+  },
+  "rows": [
+    {
+      "id": "gold-001",
+      "category": "api_change",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-002",
+      "category": "api_change",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-003",
+      "category": "api_change",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [
+        "api-reference"
+      ],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-004",
+      "category": "api_change",
+      "behavior": "write_docs",
+      "drafts": 2,
+      "dropped": [],
+      "llm_calls": 2,
+      "hallucinated": [
+        "api-reference",
+        "guide"
+      ],
+      "target_expected": [
+        "api-reference",
+        "guide"
+      ],
+      "target_got": [
+        "api-reference",
+        "guide"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-005",
+      "category": "api_change",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-006",
+      "category": "api_change",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [
+        "readme"
+      ],
+      "target_expected": [
+        "readme"
+      ],
+      "target_got": [
+        "readme"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-007",
+      "category": "feature_doc",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-008",
+      "category": "feature_doc",
+      "behavior": "write_docs",
+      "drafts": 2,
+      "dropped": [],
+      "llm_calls": 2,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference",
+        "guide"
+      ],
+      "target_got": [
+        "api-reference",
+        "guide"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-009",
+      "category": "feature_doc",
+      "behavior": "stay_silent",
+      "drafts": 0,
+      "dropped": [],
+      "llm_calls": 0,
+      "hallucinated": [],
+      "target_expected": [
+        "docs/guide/getting-started.md"
+      ],
+      "target_got": [],
+      "target_match": false,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-010",
+      "category": "feature_doc",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-011",
+      "category": "adr_impact",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-012",
+      "category": "adr_impact",
+      "behavior": "write_docs",
+      "drafts": 2,
+      "dropped": [],
+      "llm_calls": 4,
+      "hallucinated": [
+        "api-reference"
+      ],
+      "target_expected": [
+        "api-reference",
+        "readme"
+      ],
+      "target_got": [
+        "api-reference",
+        "readme"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-013",
+      "category": "adr_impact",
+      "behavior": "write_docs",
+      "drafts": 2,
+      "dropped": [],
+      "llm_calls": 2,
+      "hallucinated": [
+        "api-reference"
+      ],
+      "target_expected": [
+        "api-reference",
+        "readme"
+      ],
+      "target_got": [
+        "api-reference",
+        "readme"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-014",
+      "category": "adr_impact",
+      "behavior": "stay_silent",
+      "drafts": 0,
+      "dropped": [],
+      "llm_calls": 0,
+      "hallucinated": [],
+      "target_expected": [
+        "docs/adr/0003-dependency-policy.md"
+      ],
+      "target_got": [],
+      "target_match": false,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-015",
+      "category": "readme_update",
+      "behavior": "write_docs",
+      "drafts": 0,
+      "dropped": [
+        {
+          "target": "readme",
+          "error": "no allowed symbol cited anywhere; unknown identifiers: ['DEMOPKG_API_TOKEN', 'api_token', 'page_size', 'requires-python'] (after 3 attempts)"
+        }
+      ],
+      "llm_calls": 3,
+      "hallucinated": [],
+      "target_expected": [
+        "readme"
+      ],
+      "target_got": [],
+      "target_match": false,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-016",
+      "category": "readme_update",
+      "behavior": "stay_silent",
+      "drafts": 0,
+      "dropped": [],
+      "llm_calls": 0,
+      "hallucinated": [],
+      "target_expected": [
+        "README.md"
+      ],
+      "target_got": [],
+      "target_match": false,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-017",
+      "category": "readme_update",
+      "behavior": "stay_silent",
+      "drafts": 0,
+      "dropped": [],
+      "llm_calls": 0,
+      "hallucinated": [],
+      "target_expected": [
+        "readme"
+      ],
+      "target_got": [],
+      "target_match": false,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-018",
+      "category": "readme_update",
+      "behavior": "stay_silent",
+      "drafts": 0,
+      "dropped": [],
+      "llm_calls": 0,
+      "hallucinated": [],
+      "target_expected": [
+        "docs/contributing.md"
+      ],
+      "target_got": [],
+      "target_match": false,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-019",
+      "category": "readme_update",
+      "behavior": "stay_silent",
+      "drafts": 0,
+      "dropped": [],
+      "llm_calls": 0,
+      "hallucinated": [],
+      "target_expected": [
+        "changelog"
+      ],
+      "target_got": [],
+      "target_match": false,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-020",
+      "category": "readme_update",
+      "behavior": "stay_silent",
+      "drafts": 0,
+      "dropped": [],
+      "llm_calls": 0,
+      "hallucinated": [],
+      "target_expected": [
+        "guide"
+      ],
+      "target_got": [],
+      "target_match": false,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-045",
+      "category": "feature_doc",
+      "behavior": "write_docs",
+      "drafts": 2,
+      "dropped": [],
+      "llm_calls": 2,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference",
+        "readme"
+      ],
+      "target_got": [
+        "api-reference",
+        "readme"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-046",
+      "category": "api_change",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-047",
+      "category": "readme_update",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [
+        {
+          "target": "guide",
+          "error": "truncated_reply (increase DOCAGENT_LLM_MAX_TOKENS)"
+        }
+      ],
+      "llm_calls": 3,
+      "hallucinated": [
+        "api-reference"
+      ],
+      "target_expected": [
+        "api-reference",
+        "guide"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": false
+    },
+    {
+      "id": "gold-048",
+      "category": "feature_doc",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [
+        "readme"
+      ],
+      "target_expected": [
+        "readme"
+      ],
+      "target_got": [
+        "readme"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-049",
+      "category": "feature_doc",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [
+        "api-reference"
+      ],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-050",
+      "category": "readme_update",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [
+        "readme"
+      ],
+      "target_expected": [
+        "readme"
+      ],
+      "target_got": [
+        "readme"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    },
+    {
+      "id": "gold-054",
+      "category": "api_change",
+      "behavior": "write_docs",
+      "drafts": 1,
+      "dropped": [],
+      "llm_calls": 1,
+      "hallucinated": [],
+      "target_expected": [
+        "api-reference"
+      ],
+      "target_got": [
+        "api-reference"
+      ],
+      "target_match": true,
+      "must_include_hit": true
+    }
+  ]
+}

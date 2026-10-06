@@ -21,7 +21,7 @@
       "demopkg/client.py"
     ],
     "summary": "У fetch_records() изменён порядок аргументов и добавлен обязательный timeout; обратно несовместимо.",
-    "diff": "--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -31,7 +31,7 @@ class APIClient:\n-    def fetch_records(self, endpoint, limit=100):\n+    def fetch_records(self, endpoint, timeout, limit=100):\n         \"\"\"Fetch records from the given endpoint.\"\"\"\n         url = f\"{self.base_url}/{endpoint}\"\n-        resp = self.session.get(url, params={\"limit\": limit})\n+        resp = self.session.get(url, params={\"limit\": limit}, timeout=timeout)\n         resp.raise_for_status()\n         return resp.json()[\"items\"]\n",
+    "diff": "diff --git a/demopkg/client.py b/demopkg/client.py\n--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -31,6 +31,6 @@ class APIClient:\n-    def fetch_records(self, endpoint, limit=100):\n+    def fetch_records(self, endpoint, timeout, limit=100):\n         \"\"\"Fetch records from the given endpoint.\"\"\"\n         url = f\"{self.base_url}/{endpoint}\"\n-        resp = self.session.get(url, params={\"limit\": limit})\n+        resp = self.session.get(url, params={\"limit\": limit}, timeout=timeout)\n         resp.raise_for_status()\n         return resp.json()[\"items\"]\n",
     "public_api_impact": "changed"
   },
   "docs_change": {

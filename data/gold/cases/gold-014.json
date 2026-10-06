@@ -22,7 +22,7 @@
       "Makefile"
     ],
     "summary": "В CI добавлен pip-audit; политика безопасности требует проверки зависимостей перед релизом.",
-    "diff": "--- a/Makefile\n+++ b/Makefile\n@@ -14,6 +14,9 @@ lint:\n \truff check src tests\n+\n+audit:\n+\tpip-audit -r requirements.txt --strict\n--- a/requirements-dev.txt\n+++ b/requirements-dev.txt\n@@ -3,3 +3,4 @@ pytest>=8.0\n ruff>=0.5\n+pip-audit>=2.7\n"
+    "diff": "diff --git a/Makefile b/Makefile\n--- a/Makefile\n+++ b/Makefile\n@@ -14,1 +14,4 @@ lint:\n \truff check src tests\n+\n+audit:\n+\tpip-audit -r requirements.txt --strict\ndiff --git a/requirements-dev.txt b/requirements-dev.txt\n--- a/requirements-dev.txt\n+++ b/requirements-dev.txt\n@@ -3,1 +3,2 @@ pytest>=8.0\n ruff>=0.5\n+pip-audit>=2.7\n"
   },
   "docs_change": {
     "change_type": "update",

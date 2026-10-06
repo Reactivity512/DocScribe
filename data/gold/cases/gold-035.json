@@ -20,7 +20,7 @@
       "demopkg/inference.py"
     ],
     "summary": "Исправлены lint-замечания: неиспользуемый импорт удалён, f-string без плейсхолдеров упрощён.",
-    "diff": "--- a/demopkg/inference.py\n+++ b/demopkg/inference.py\n@@ -1,7 +1,6 @@\n import numpy as np\n-import os\n@@ -33,7 +32,7 @@ class ImageClassifier:\n-        msg = f\"no labels\"\n+        msg = \"no labels\"\n",
+    "diff": "diff --git a/demopkg/inference.py b/demopkg/inference.py\n--- a/demopkg/inference.py\n+++ b/demopkg/inference.py\n@@ -1,2 +1,1 @@\n import numpy as np\n-import os\n@@ -33,1 +32,1 @@ class ImageClassifier:\n-        msg = f\"no labels\"\n+        msg = \"no labels\"\n",
     "public_api_impact": "none"
   },
   "docs_change": {

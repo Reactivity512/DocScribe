@@ -21,7 +21,7 @@
       "demopkg/exporters.py"
     ],
     "summary": "Добавлены аннотации типов и from __future__ import annotations; рантайм-поведение идентично.",
-    "diff": "--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -1,4 +1,5 @@\n+from __future__ import annotations\n import requests\n@@ -30,7 +31,7 @@ class APIClient:\n-    def fetch_records(self, endpoint, timeout, limit=100):\n+    def fetch_records(self, endpoint: str, timeout: float, limit: int = 100) -> list[dict]:\n--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -10,7 +11,7 @@\n-def export_to_csv(df, path, sep=\",\"):\n+def export_to_csv(df: pd.DataFrame, path: str, sep: str = \",\") -> None:\n",
+    "diff": "diff --git a/demopkg/client.py b/demopkg/client.py\n--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -1,1 +1,2 @@\n+from __future__ import annotations\n import requests\n@@ -30,1 +31,1 @@ class APIClient:\n-    def fetch_records(self, endpoint, timeout, limit=100):\n+    def fetch_records(self, endpoint: str, timeout: float, limit: int = 100) -> list[dict]:\ndiff --git a/demopkg/exporters.py b/demopkg/exporters.py\n--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -10,1 +11,1 @@\n-def export_to_csv(df, path, sep=\",\"):\n+def export_to_csv(df: pd.DataFrame, path: str, sep: str = \",\") -> None:\n",
     "public_api_impact": "none"
   },
   "docs_change": {

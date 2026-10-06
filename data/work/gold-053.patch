@@ -1,0 +1,7 @@
+(no diff — initial repository scan)
+repo tree:
+  pyproject.toml
+  src/pkg/__init__.py
+  src/pkg/core.py
+  src/pkg/utils.py
+  tests/test_core.py

@@ -20,7 +20,7 @@
       "demopkg/exporters.py"
     ],
     "summary": "В docstring исправлено 'recieve' -> 'receive'; поведение функции не тронуто.",
-    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -8,7 +8,7 @@ def export_to_csv(df, path, sep=\",\"):\n-    \"\"\"Write a DataFrame and recieve the target path back.\"\"\"\n+    \"\"\"Write a DataFrame and receive the target path back.\"\"\"\n"
+    "diff": "diff --git a/demopkg/exporters.py b/demopkg/exporters.py\n--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -8,1 +8,1 @@ def export_to_csv(df, path, sep=\",\"):\n-    \"\"\"Write a DataFrame and recieve the target path back.\"\"\"\n+    \"\"\"Write a DataFrame and receive the target path back.\"\"\"\n"
   },
   "docs_change": {
     "change_type": "none",

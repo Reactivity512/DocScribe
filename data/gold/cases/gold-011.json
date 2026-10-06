@@ -23,7 +23,7 @@
       "pyproject.toml"
     ],
     "summary": "Введён слой хранилища с интерфейсом StorageBackend; выбор бэкенда через фабрику.",
-    "diff": "--- a/demopkg/storage/base.py\n+++ b/demopkg/storage/base.py\n@@ new file mode 100644\n+class StorageBackend(abc.ABC):\n+    @abc.abstractmethod\n+    def put(self, key, payload): ...\n+    @abc.abstractmethod\n+    def get(self, key): ...\n--- a/demopkg/storage/__init__.py\n+++ b/demopkg/storage/__init__.py\n+def create_backend(name=\"local\"):\n+    \"\"\"Return a StorageBackend implementation by name.\"\"\"\n+    return LOCAL_BACKENDS[name]()\n",
+    "diff": "diff --git a/demopkg/storage/base.py b/demopkg/storage/base.py\n--- a/demopkg/storage/base.py\n+++ b/demopkg/storage/base.py\n@@ new file mode 100644\n+class StorageBackend(abc.ABC):\n+    @abc.abstractmethod\n+    def put(self, key, payload): ...\n+    @abc.abstractmethod\n+    def get(self, key): ...\ndiff --git a/demopkg/storage/__init__.py b/demopkg/storage/__init__.py\n--- a/demopkg/storage/__init__.py\n+++ b/demopkg/storage/__init__.py\n+def create_backend(name=\"local\"):\n+    \"\"\"Return a StorageBackend implementation by name.\"\"\"\n+    return LOCAL_BACKENDS[name]()\n",
     "public_api_impact": "added"
   },
   "docs_change": {

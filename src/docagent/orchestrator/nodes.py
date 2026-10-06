@@ -26,18 +26,90 @@ def _ev(node: str, t0: float, **counts) -> dict:
     return {"node": node, "ms": int((time.monotonic() - t0) * 1000), **counts}
 
 
+def log_events(state: OrchState, events: list[dict]) -> None:
+    """Дописывает события нод в Settings.runs_log (jsonl) — аудит прогонов.
+
+    Вызывается только из HITL-ветки: там прогон продолжается в другом процессе
+    (watcher), и событие иначе потерялось бы; полный маршрут и так возвращается
+    в финальном состоянии. Ошибка записи не должна ломать граф.
+    """
+    if not events:
+        return
+    try:
+        p = Path(get_settings().runs_log)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tid = state.get("thread_id", "")
+        with p.open("a", encoding="utf-8") as fh:
+            for ev in events:
+                fh.write(json.dumps({**ev, "thread_id": tid},
+                                    ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
+
+def resumed_after_review(state: OrchState) -> bool:
+    """True, если граф был разбужен ревью (есть решение в состоянии).
+
+    Используется watcher'ом: после resume нужно понять, обновился ли PR, не
+    заглядывая в детали внутренних нод.
+    """
+    return bool((state.get("approval") or {}).get("decision"))
+
+
 # --------------------------------------------------------------------------
 def fetch_pr(state: OrchState) -> dict:
-    """Загрузка diff. В MVP diff уже передан в состоянии (gold-кейс / CLI);
-    на шаге 4 сюда придёт git-клонирование по pr_ref."""
+    """Загрузка diff и метаданных PR.
+
+    Два источника (шаг 4 — чтение внутрь графа):
+      * publish_target=github + ссылка на PR -> GitHubClient: REST-diff и метаданные
+        (заголовок/тело/ветки/номер) — они нужны publish (шаг 4) и watcher'у (шаг 5);
+      * иначе — diff уже пришёл в состоянии (gold-кейс, --diff, тесты).
+
+    Ошибка GitHub не роняет граф: причина уходит в errors, а узел analyze_diff
+    честно отработает по пустому diff (stay_silent) — так CLI показывает понятное
+    сообщение вместо трейсбека PyGithub.
+    """
     t0 = time.monotonic()
+    s = get_settings()
     diff = state.get("diff_text") or ""
-    if not diff and state.get("pr_ref"):
-        p = Path(state["pr_ref"])
+    pr_ref = state.get("pr_ref") or ""
+    delta: dict = {}
+
+    if not diff and pr_ref and getattr(s, "publish_target", "outbox") == "github":
+        from ..github_int.client import GitHubClient
+        from ..github_int.refs import parse_pr_ref
+
+        slug, number = parse_pr_ref(pr_ref)
+        if not slug or not number:
+            err = (f"fetch_pr: не разобрал ссылку на PR {pr_ref!r} — нужен вид "
+                   "https://github.com/owner/repo/pull/N или owner/repo#N")
+            return {"diff_text": "", "errors": [err],
+                    "events": [_ev("fetch_pr", t0, error="bad_pr_ref")]}
+        client = GitHubClient(settings=s)
+        try:
+            diff = client.diff_text(slug, number)
+            meta = client.pull_meta(slug, number)
+            delta.update({
+                "pr_slug": meta["slug"],
+                "pr_number": meta["number"],
+                "pr_title": meta["title"],
+                "pr_body": meta["body"],
+                "pr_state": meta["state"],
+                "pr_base": meta["base"],
+                "pr_head": meta["head"],
+            })
+        except Exception as e:  # noqa: BLE001
+            err = f"fetch_pr: GitHub недоступен для {slug}#{number}: {type(e).__name__}: {str(e)[:200]}"
+            return {"diff_text": "", "errors": [err],
+                    "events": [_ev("fetch_pr", t0, error=type(e).__name__)]}
+
+    if not diff and pr_ref:
+        p = Path(pr_ref)  # локальный .diff (совместимость с шагом 3)
         if p.exists():
             diff = p.read_text(encoding="utf-8")
-    s = get_settings()
+
     return {
+        **delta,
         "diff_text": diff,
         "lang": state.get("lang") or s.docs_lang,
         "thread_id": state.get("thread_id") or f"pr-{state.get('pr_ref', 'unknown')}",
@@ -160,7 +232,8 @@ def prepare_payload(state: OrchState) -> dict:
         f"## 📝 Docs update proposal (автосген, шаг {state.get('revisions_count', 0)})\n\n"
         f"PR: `{state.get('pr_ref', '?')}` · язык: {state.get('lang', 'ru')}\n\n"
         "### Изменяемые файлы\n" + "\n".join(body_lines) + warn +
-        "\n_Одобри этот draft PR (review → Approve) или оставь замечания — я перепишу._\n"
+        "\n_Черновик документации от DocAgent. Если правки верны — мержите PR; "
+        "если нужны изменения — оставьте комментарий, и я перепишу._\n"
     )
     commit = f"docs: автообновление документации ({', '.join(targets)})"
     payload = {"pr_ref": state.get("pr_ref", ""), "branch": "docagent/auto-docs",
@@ -170,6 +243,29 @@ def prepare_payload(state: OrchState) -> dict:
 
 
 # --------------------------------------------------------------------------
+def route_after_payload(state: OrchState) -> str:
+    """Шаг 5: при github-публикации PR создаётся ДО ожидания ревью.
+
+    Лид ревьюит diff самого PR, поэтому публикация обязана произойти раньше точки
+    HITL. Для outbox (тесты/CLI) порядок прежний: ревьюить нечего, interrupt до
+    записи — иначе тесты ждали бы человека раньше, чем появится payload на диске.
+    """
+    s = get_settings()
+    if getattr(s, "publish_target", "outbox") == "github":
+        return "publish_first"
+    return "human_approval"
+
+
+def route_after_first_publish(state: OrchState) -> str:
+    """Первая публикация при github-режиме: ждать ревью в PR.
+
+    Если PR по ветке треда уже открыт (`updated` — режим апдейта), повторный
+    interrupt не нужен: watcher (шаг 5) сам обработает комментарии, а прогон
+    завершается.
+    """
+    return "finalize_published" if state.get("updated") else "human_approval"
+
+
 def human_approval(state: OrchState) -> dict:
     """Точка HITL. interrupt() замораживает граф в чекпоинте; решение приходит
     через Command(resume={decision, feedback, reviewer}). В шаге 5 resume будет
@@ -184,11 +280,16 @@ def human_approval(state: OrchState) -> dict:
         "question": "approve | reject | changes (+feedback)",
     }
     decision: dict = interrupt(request)  # <- здесь граф ждёт человека
+    ev = _ev("human_approval", time.monotonic(),
+             decision=decision.get("decision", "?"))
+    log_events(state, [ev])  # решение принимается в другом процессе (watcher, шаг 5)
     return {"approval": {"decision": decision.get("decision", "reject"),
                          "feedback": decision.get("feedback", ""),
                          "reviewer": decision.get("reviewer", "unknown")},
-            "events": [_ev("human_approval", time.monotonic(),
-                           decision=decision.get("decision", "?"))]}
+            # флаг «PR ждёт ревью» снимаем: решение получено, повторный interrupt
+            # без новой публикации не нужен (иначе граф зацикливается)
+            "review_pending": False,
+            "events": [ev]}
 
 
 def route_after_approval(state: OrchState) -> str:
@@ -240,17 +341,29 @@ def publish(state: OrchState) -> dict:
 
     Режимы (env DOCAGENT_PUBLISH_TARGET):
       outbox  — шаг 3: запись payload в data/outbox/<thread>.json (дефолт, для тестов);
-      github  — шаг 4: создание ветки/коммита/draft PR через GitHub API.
+      github  — шаг 4: создание ветки/коммита/PR через GitHub API.
     Контракт payload не меняется между режимами.
     """
+    return _publish(state)
+
+
+def _publish(state: OrchState) -> dict:
     t0 = time.monotonic()
     s = get_settings()
     tid = re.sub(r"[^A-Za-z0-9_.-]", "_", state.get("thread_id", "run"))
 
     if getattr(s, "publish_target", "outbox") == "github":
         from ..github_int.publisher import publish_to_github
+        is_revision = bool(state.get("revisions_count"))
         result = publish_to_github(state, s)
-        return {**result, "status": ["published"],
+        # `updated=True` для правки по ревью: PR по ветке уже открыт, отдельный
+        # interrupt не нужен — watcher (шаг 5) ответит в тред и продолжит опрос.
+        delta = {"updated": True} if (is_revision or result.get("updated")) else {}
+        # pr_number/pr_url кладём в состояние: их читают watcher (шаг 5) и CLI
+        return {**result, **delta, "status": ["published"],
+                "publish_target": "github",
+                "pr_number": result.get("pr_number") or state.get("pr_number"),
+                "pr_url": result.get("pr_url") or state.get("pr_url", ""),
                 "events": [_ev("publish", t0, **{k: v for k, v in result.items()
                                                  if k != "status"})]}
 
@@ -268,11 +381,31 @@ def publish(state: OrchState) -> dict:
             "events": [_ev("publish", t0, outbox=str(path))]}
 
 
+def publish_first(state: OrchState) -> dict:
+    """Публикация ДО ожидания ревью (github-режим, шаг 5).
+
+    Отдельная нода, чтобы в графе не было цикла `publish -> human_approval`:
+    в LangGraph повторный вход в ноду терял признаки, выставленные публикацией
+    (проверено: `review_pending`/`publish_target` не переживали resume, и граф
+    либо зацикливался, либо молча уходил в END). Здесь маршрут однозначен —
+    внутри ноды нечего восстанавливать.
+    """
+    return _publish(state)
+
+
 def finalize_silent(state: OrchState) -> dict:
     t0 = time.monotonic()
     reason = state.get("behavior", "stay_silent")
     return {"status": [f"silent:{reason}"],
             "events": [_ev("finalize_silent", t0, reason=reason)]}
+
+
+def finalize_published(state: OrchState) -> dict:
+    """Шаг 5: PR уже открыт по ветке треда — повторную публикацию не делаем."""
+    t0 = time.monotonic()
+    return {"status": ["pr_exists"],
+            "events": [_ev("finalize_published", t0,
+                           pr_number=state.get("pr_number"))]}
 
 
 def finalize_rejected(state: OrchState) -> dict:

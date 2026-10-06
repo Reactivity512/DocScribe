@@ -22,7 +22,7 @@
       "demopkg/pipeline.py"
     ],
     "summary": "Прогнан ruff format: переносы строк и кавычки; логика не менялась.",
-    "diff": "--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -44,9 +44,11 @@ class APIClient:\n-        url = f\"{self.base_url}/{endpoint}\"\n-        resp = self.session.get(url, params={\"limit\": limit}, timeout=timeout)\n+        url = (\n+            f\"{self.base_url}/{endpoint}\"\n+        )\n+        resp = self.session.get(\n+            url, params={\"limit\": limit}, timeout=timeout\n+        )\n",
+    "diff": "diff --git a/demopkg/client.py b/demopkg/client.py\n--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -44,2 +44,6 @@ class APIClient:\n-        url = f\"{self.base_url}/{endpoint}\"\n-        resp = self.session.get(url, params={\"limit\": limit}, timeout=timeout)\n+        url = (\n+            f\"{self.base_url}/{endpoint}\"\n+        )\n+        resp = self.session.get(\n+            url, params={\"limit\": limit}, timeout=timeout\n+        )\n",
     "public_api_impact": "none"
   },
   "docs_change": {

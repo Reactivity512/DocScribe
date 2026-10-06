@@ -20,7 +20,7 @@
       "tests/test_session.py"
     ],
     "summary": "Стабилизация flaky-теста: увеличен таймаут ожидания и добавлен seed.",
-    "diff": "--- a/tests/test_session.py\n+++ b/tests/test_session.py\n@@ -22,7 +22,8 @@ def test_session_reconnect():\n-    time.sleep(0.1)\n+    random.seed(42)\n+    time.sleep(1.0)\n     assert session.is_connected\n"
+    "diff": "diff --git a/tests/test_session.py b/tests/test_session.py\n--- a/tests/test_session.py\n+++ b/tests/test_session.py\n@@ -22,2 +22,3 @@ def test_session_reconnect():\n-    time.sleep(0.1)\n+    random.seed(42)\n+    time.sleep(1.0)\n     assert session.is_connected\n"
   },
   "docs_change": {
     "change_type": "none",

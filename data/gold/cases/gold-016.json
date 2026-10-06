@@ -20,7 +20,7 @@
       "demopkg/__init__.py"
     ],
     "summary": "Публичный вход в пакет изменён: рекомендуемый способ — from demopkg import Client.",
-    "diff": "--- a/demopkg/__init__.py\n+++ b/demopkg/__init__.py\n@@ -1,6 +1,8 @@\n-from .client import APIClient\n+from .client import APIClient as Client\n+from .exporters import export_to_csv, export_to_parquet\n \n-__all__ = [\"APIClient\"]\n+__version__ = \"0.4.0\"\n+__all__ = [\"Client\", \"export_to_csv\", \"export_to_parquet\", \"__version__\"]\n",
+    "diff": "diff --git a/demopkg/__init__.py b/demopkg/__init__.py\n--- a/demopkg/__init__.py\n+++ b/demopkg/__init__.py\n@@ -1,3 +1,5 @@\n-from .client import APIClient\n+from .client import APIClient as Client\n+from .exporters import export_to_csv, export_to_parquet\n \n-__all__ = [\"APIClient\"]\n+__version__ = \"0.4.0\"\n+__all__ = [\"Client\", \"export_to_csv\", \"export_to_parquet\", \"__version__\"]\n",
     "public_api_impact": "changed"
   },
   "docs_change": {

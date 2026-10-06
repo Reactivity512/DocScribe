@@ -22,7 +22,7 @@
       "pyproject.toml"
     ],
     "summary": "Хранилище состояния графа: SQLite вместо JSON-файла; для production заложен интерфейс под Postgres.",
-    "diff": "--- a/demopkg/state/store.py\n+++ b/demopkg/state/store.py\n@@ -1,9 +1,12 @@\n-import json\n+import sqlite3\n+\n+# MVP: SQLite. Интерфейс рассчитан на реализацию поверх PostgreSQL в production.\n+SCHEMA = \"CREATE TABLE IF NOT EXISTS state (run_id TEXT PRIMARY KEY, payload BLOB)\"\n \n-def load_state(path):\n-    with open(path) as fh:\n-        return json.load(fh)\n+def load_state(db_path, run_id):\n+    con = sqlite3.connect(db_path)\n+    row = con.execute(\"SELECT payload FROM state WHERE run_id = ?\", (run_id,)).fetchone()\n+    return pickle.loads(row[0]) if row else None\n",
+    "diff": "diff --git a/demopkg/state/store.py b/demopkg/state/store.py\n--- a/demopkg/state/store.py\n+++ b/demopkg/state/store.py\n@@ -1,5 +1,9 @@\n-import json\n+import sqlite3\n+\n+# MVP: SQLite. Интерфейс рассчитан на реализацию поверх PostgreSQL в production.\n+SCHEMA = \"CREATE TABLE IF NOT EXISTS state (run_id TEXT PRIMARY KEY, payload BLOB)\"\n \n-def load_state(path):\n-    with open(path) as fh:\n-        return json.load(fh)\n+def load_state(db_path, run_id):\n+    con = sqlite3.connect(db_path)\n+    row = con.execute(\"SELECT payload FROM state WHERE run_id = ?\", (run_id,)).fetchone()\n+    return pickle.loads(row[0]) if row else None\n",
     "public_api_impact": "changed"
   },
   "docs_change": {

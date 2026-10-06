@@ -10,20 +10,7 @@ from __future__ import annotations
 import re
 
 from ..config import Settings
-from .client import GitHubClient
-
-
-def _repo_slug(payload: dict, s: Settings) -> str:
-    pr_ref = payload.get("pr_ref", "")
-    m = re.search(r"github\.com/([\w.-]+/[\w.-]+)", pr_ref)
-    if m:
-        return m.group(1)
-    # "owner/name#7" или "owner/name/pulls/7" — но не локальный путь к .diff
-    if not pr_ref.endswith(".diff") and "/" in pr_ref \
-            and not pr_ref.startswith(("/", "\\")) \
-            and ":" not in pr_ref.split("/")[0]:  # "F:\\..." это путь, не slug
-        return pr_ref.split("/pulls")[0].split("#")[0]
-    return s.demo_repo
+from .refs import _repo_slug, make_client, pr_slug, title_for_pr  # noqa: F401
 
 
 def render_doc_file(existing: str | None, file: dict) -> str:
@@ -46,11 +33,19 @@ def render_doc_file(existing: str | None, file: dict) -> str:
     return existing.rstrip() + "\n\n" + block + "\n"
 
 
-def publish_to_github(state: dict, s: Settings, client: GitHubClient | None = None) -> dict:
-    """Создаёт/обновляет draft PR. Возвращает delta для OrchState."""
-    c = client or GitHubClient(settings=s)
+def publish_to_github(state: dict, s: Settings, client=None) -> dict:
+    """Создаёт/обновляет PR. Возвращает delta для OrchState.
+
+    Порядок «сначала PR, потом ревью» (шаг 5): PR публикуется как обычный (не draft),
+    лид смотрит diff и мержит руками; draft остаётся только для эскалации
+    needs_human_edit, чтобы неготовое не выглядело готовым.
+
+    Клиент резолвится лениво (refs.make_client): единственная точка создания —
+    иначе импорт класса на уровне модуля ломает подмену в тестах и watcher'е.
+    """
+    c = make_client(state, s, client)
     payload = state.get("payload", {})
-    slug = _repo_slug(payload, s)
+    slug = pr_slug(state, s)
     tid = re.sub(r"[^A-Za-z0-9_.-]", "_", state.get("thread_id", "run"))
     branch = f"{s.bot_branch_prefix}{tid}"
 
@@ -93,7 +88,7 @@ def publish_to_github(state: dict, s: Settings, client: GitHubClient | None = No
     parent_sha = branch_ref_sha or repo_obj.get_branch("main").commit.sha
     c.create_blob_commit(slug, branch, parent_sha, files_out,
                          payload.get("commit_message", "docs: auto"))
-    title = f"Docs: {payload.get('pr_ref', tid)}"
+    title = title_for_pr({**state, "pr_slug": slug})
     body = payload.get("body_md", "")
     if payload.get("needs_human_edit"):
         body += "\n\nneeds_human_edit\n"
@@ -124,7 +119,8 @@ def publish_to_github(state: dict, s: Settings, client: GitHubClient | None = No
             return upd
 
     try:
-        res = c.open_draft_pr(slug, branch, title, body)
+        res = c.open_draft_pr(slug, branch, title, body,
+                              draft=bool(payload.get("needs_human_edit")))
     except Exception as e:
         # гонка/легаси-PR в closed: пробуем ещё раз найти и обновить
         upd = _update_existing()

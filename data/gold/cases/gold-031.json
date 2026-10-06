@@ -21,7 +21,7 @@
       ".github/workflows/ci.yml"
     ],
     "summary": "Включён coverage с порогом 80%, отчёт публикуется в CI.",
-    "diff": "--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -40,3 +40,7 @@\n [tool.coverage.run]\n+source = [\"demopkg\"]\n+fail_under = 80\n--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -20,3 +20,5 @@\n+      - run: pytest --cov --cov-report=xml\n+      - uses: codecov/codecov-action@v4\n"
+    "diff": "diff --git a/pyproject.toml b/pyproject.toml\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -40,1 +40,3 @@\n [tool.coverage.run]\n+source = [\"demopkg\"]\n+fail_under = 80\ndiff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml\n--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -20,0 +20,2 @@\n+      - run: pytest --cov --cov-report=xml\n+      - uses: codecov/codecov-action@v4\n"
   },
   "docs_change": {
     "change_type": "none",

@@ -23,7 +23,7 @@
       "pyproject.toml"
     ],
     "summary": "Добавлен файловый кэш get_cached() с настройкой CACHE_DIR; новая зависимость diskcache.",
-    "diff": "--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -10,6 +10,7 @@ class Settings(BaseSettings):\n     base_url: str = \"https://api.example.com\"\n+    # читается из DEMOPKG_CACHE_DIR (см. docs/configuration.md)\n+    cache_dir: str = \".demopkg-cache\"\n     page_size: int = 50\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -21,6 +21,7 @@ dependencies = [\n     \"pandas>=2.0\",\n+    \"diskcache>=5.6\",\n ]\n--- a/demopkg/cache.py\n+++ b/demopkg/cache.py\n@@ new file mode 100644\n+def get_cached(key, ttl_seconds=300):\n+    \"\"\"Вернуть значение из файлового кэша по ключу key.\"\"\"\n",
+    "diff": "diff --git a/demopkg/settings.py b/demopkg/settings.py\n--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -10,2 +10,4 @@ class Settings(BaseSettings):\n     base_url: str = \"https://api.example.com\"\n+    # читается из DEMOPKG_CACHE_DIR (см. docs/configuration.md)\n+    cache_dir: str = \".demopkg-cache\"\n     page_size: int = 50\ndiff --git a/pyproject.toml b/pyproject.toml\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -21,2 +21,3 @@ dependencies = [\n     \"pandas>=2.0\",\n+    \"diskcache>=5.6\",\n ]\ndiff --git a/demopkg/cache.py b/demopkg/cache.py\n--- a/demopkg/cache.py\n+++ b/demopkg/cache.py\n@@ new file mode 100644\n+def get_cached(key, ttl_seconds=300):\n+    \"\"\"Вернуть значение из файлового кэша по ключу key.\"\"\"\n",
     "public_api_impact": "added"
   },
   "docs_change": {

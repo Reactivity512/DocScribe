@@ -21,7 +21,7 @@
       "demopkg/pipeline.py"
     ],
     "summary": "Значение по умолчанию у retries изменено с 3 на 5 — поведение изменилось без смены сигнатуры.",
-    "diff": "--- a/demopkg/pipeline.py\n+++ b/demopkg/pipeline.py\n@@ -58,7 +58,7 @@ class RetryPolicy:\n-    def __init__(self, retries=3, backoff=1.5):\n+    def __init__(self, retries=5, backoff=1.5):\n         self.retries = retries\n         self.backoff = backoff\n",
+    "diff": "diff --git a/demopkg/pipeline.py b/demopkg/pipeline.py\n--- a/demopkg/pipeline.py\n+++ b/demopkg/pipeline.py\n@@ -58,3 +58,3 @@ class RetryPolicy:\n-    def __init__(self, retries=3, backoff=1.5):\n+    def __init__(self, retries=5, backoff=1.5):\n         self.retries = retries\n         self.backoff = backoff\n",
     "public_api_impact": "changed"
   },
   "docs_change": {

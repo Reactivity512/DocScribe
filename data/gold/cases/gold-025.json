@@ -20,7 +20,7 @@
       "demopkg/_internal/parser.py"
     ],
     "summary": "Внутренний парсер разбит на приватные хелперы; публичные сигнатуры не менялись.",
-    "diff": "--- a/demopkg/_internal/parser.py\n+++ b/demopkg/_internal/parser.py\n@@ -14,12 +14,16 @@ def parse_response(raw):\n-    items = []\n-    for row in raw.splitlines():\n-        if not row.strip():\n-            continue\n-        items.append(row.split(\"\\t\"))\n-    return items\n+    return [cells for cells in (_split(row) for row in _nonempty_lines(raw))]\n+\n+\n+def _nonempty_lines(raw):\n+    return (line for line in raw.splitlines() if line.strip())\n+\n+\n+def _split(line):\n+    return line.split(\"\\t\")\n",
+    "diff": "diff --git a/demopkg/_internal/parser.py b/demopkg/_internal/parser.py\n--- a/demopkg/_internal/parser.py\n+++ b/demopkg/_internal/parser.py\n@@ -14,6 +14,9 @@ def parse_response(raw):\n-    items = []\n-    for row in raw.splitlines():\n-        if not row.strip():\n-            continue\n-        items.append(row.split(\"\\t\"))\n-    return items\n+    return [cells for cells in (_split(row) for row in _nonempty_lines(raw))]\n+\n+\n+def _nonempty_lines(raw):\n+    return (line for line in raw.splitlines() if line.strip())\n+\n+\n+def _split(line):\n+    return line.split(\"\\t\")\n",
     "public_api_impact": "none"
   },
   "docs_change": {

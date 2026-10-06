@@ -21,7 +21,7 @@
       "demopkg/client.py"
     ],
     "summary": "DemoClient теперь бросает AuthError при пустом токене вместо анонимных запросов.",
-    "diff": "--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -22,8 +22,12 @@ class DemoClient:\n     def __init__(self, base_url, token=None):\n         self.base_url = base_url.rstrip(\"/\")\n-        self.token = token\n+        self.token = token or os.environ.get(\"DEMO_API_TOKEN\")\n+        if not self.token:\n+            raise AuthError(\n+                \"Token is required: pass token= or set DEMO_API_TOKEN\"\n+            )\n \n     def get(self, path):\n-        headers = {}\n+        headers = {\"Authorization\": f\"Bearer {self.token}\"}\n",
+    "diff": "diff --git a/demopkg/client.py b/demopkg/client.py\n--- a/demopkg/client.py\n+++ b/demopkg/client.py\n@@ -22,6 +22,10 @@ class DemoClient:\n     def __init__(self, base_url, token=None):\n         self.base_url = base_url.rstrip(\"/\")\n-        self.token = token\n+        self.token = token or os.environ.get(\"DEMO_API_TOKEN\")\n+        if not self.token:\n+            raise AuthError(\n+                \"Token is required: pass token= or set DEMO_API_TOKEN\"\n+            )\n \n     def get(self, path):\n-        headers = {}\n+        headers = {\"Authorization\": f\"Bearer {self.token}\"}\n",
     "public_api_impact": "changed"
   },
   "docs_change": {

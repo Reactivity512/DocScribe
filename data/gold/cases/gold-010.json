@@ -21,7 +21,7 @@
       "demopkg/exporters.py"
     ],
     "summary": "Добавлен генератор iter_export_chunks() для выгрузки больших датасетов частями.",
-    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -30,6 +30,14 @@ def export_to_parquet(df, path, compression=\"snappy\"):\n     df.to_parquet(path, compression=compression)\n \n \n+def iter_export_chunks(df, chunksize=10_000):\n+    \"\"\"Streaming generator: yields DataFrames of at most `chunksize` rows.\n+\n+    The last chunk may be shorter than requested.\n+    \"\"\"\n+    for start in range(0, len(df), chunksize):\n+        yield df.iloc[start : start + chunksize]\n",
+    "diff": "diff --git a/demopkg/exporters.py b/demopkg/exporters.py\n--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -30,3 +30,10 @@ def export_to_parquet(df, path, compression=\"snappy\"):\n     df.to_parquet(path, compression=compression)\n \n \n+def iter_export_chunks(df, chunksize=10_000):\n+    \"\"\"Streaming generator: yields DataFrames of at most `chunksize` rows.\n+\n+    The last chunk may be shorter than requested.\n+    \"\"\"\n+    for start in range(0, len(df), chunksize):\n+        yield df.iloc[start : start + chunksize]\n",
     "public_api_impact": "added"
   },
   "docs_change": {

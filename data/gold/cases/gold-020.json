@@ -21,7 +21,7 @@
       "docs/guide/install.md"
     ],
     "summary": "В руководстве рекомендуется ставить пакет без фиксации версии, хотя API ломается в минорных релизах.",
-    "diff": "--- a/docs/guide/install.md\n+++ b/docs/guide/install.md\n@@ -7,7 +7,7 @@\n-pip install demopkg\n+pip install \"demopkg==0.4.0\"\n "
+    "diff": "diff --git a/docs/guide/install.md b/docs/guide/install.md\n--- a/docs/guide/install.md\n+++ b/docs/guide/install.md\n@@ -7,2 +7,2 @@\n-pip install demopkg\n+pip install \"demopkg==0.4.0\"\n \n"
   },
   "docs_change": {
     "change_type": "update",

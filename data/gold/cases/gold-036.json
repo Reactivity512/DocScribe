@@ -20,7 +20,7 @@
       "demopkg/exporters.py"
     ],
     "summary": "Docstring переформатирован под Google-стиль: те же слова, другие отступы и заголовки секций.",
-    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -30,10 +30,12 @@ def export_to_parquet(df, path, compression=\"snappy\"):\n-    \"\"\"Сохранить DataFrame в формате Parquet.\n-    df: данные.\n-    path: куда писать.\n-    compression: algo, snappy по умолчанию.\n-    \"\"\"\n+    \"\"\"Сохранить DataFrame в формате Parquet.\n+\n+    Args:\n+        df: данные.\n+        path: куда писать.\n+        compression: algo, snappy по умолчанию.\n+    \"\"\"\n",
+    "diff": "diff --git a/demopkg/exporters.py b/demopkg/exporters.py\n--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -30,5 +30,7 @@ def export_to_parquet(df, path, compression=\"snappy\"):\n-    \"\"\"Сохранить DataFrame в формате Parquet.\n-    df: данные.\n-    path: куда писать.\n-    compression: algo, snappy по умолчанию.\n-    \"\"\"\n+    \"\"\"Сохранить DataFrame в формате Parquet.\n+\n+    Args:\n+        df: данные.\n+        path: куда писать.\n+        compression: algo, snappy по умолчанию.\n+    \"\"\"\n",
     "public_api_impact": "none"
   },
   "docs_change": {

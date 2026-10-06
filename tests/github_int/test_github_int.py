@@ -11,6 +11,7 @@ import pytest  # noqa: E402
 
 from docagent.github_int.bootstrap import FILES, encode, plan_bootstrap  # noqa: E402
 from docagent.github_int.publisher import _repo_slug, render_doc_file  # noqa: E402
+from docagent.github_int.refs import parse_pr_ref  # noqa: E402
 
 
 # ---------------------------------------------------------------- slug parsing
@@ -24,6 +25,29 @@ def test_repo_slug(pr_ref, expected):
     class S:
         demo_repo = "Reactivity512/python-demo-repo"
     assert _repo_slug({"pr_ref": pr_ref}, S()) == expected
+
+
+@pytest.mark.parametrize("pr_ref,expected", [
+    ("https://github.com/o/r/pull/7", ("o/r", 7)),
+    ("https://github.com/o/r/pulls/12", ("o/r", 12)),
+    ("https://github.com/o/r/pull/7/files#diff-abc", ("o/r", 7)),
+    ("https://github.com/o/r/pull/7/", ("o/r", 7)),
+    ("o/r#7", ("o/r", 7)),
+    ("o/r", ("o/r", None)),
+    ("o/r.git", ("o/r", None)),
+    ("o/r/tree/main", ("o/r", None)),
+    ("https://github.com/o/r", ("o/r", None)),
+    ("git@github.com:o/r.git", ("o/r", None)),
+    # не ссылки на PR: номер не выдумываем
+    ("gold-005", (None, None)),
+    ("data/work/x.diff", (None, None)),
+    ("F:\\!prog_new\\x-pr7.diff", (None, None)),
+    ("/tmp/x/y.diff", (None, None)),
+    ("https://gitlab.com/o/r/pull/7", (None, None)),
+    ("", (None, None)),
+])
+def test_parse_pr_ref(pr_ref, expected):
+    assert parse_pr_ref(pr_ref) == expected
 
 
 # ---------------------------------------------------------------- render
@@ -144,9 +168,9 @@ class FakePublishClient:
     def repo(self, slug): return self.repo_obj
     def create_blob_commit(self, slug, branch, base_ref, files, message):
         return "newcommit"
-    def open_draft_pr(self, slug, branch, title, body, base="main"):
+    def open_draft_pr(self, slug, branch, title, body, base="main", draft=False):
         self.repo_obj.prs.append({"title": title, "body": body, "head": branch,
-                                  "base": base, "draft": True})
+                                  "base": base, "draft": draft})
         return {"number": 42, "html_url": "https://github.com/foo/bar/pull/42"}
 
 
@@ -171,8 +195,9 @@ def test_publish_to_github_flow(monkeypatch):
                    "pr_url": "https://github.com/foo/bar/pull/42",
                    "publish_mode": "github"}
     kw = fc.repo_obj.prs[0]
-    assert kw["draft"] is True                      # только draft PR
+    assert kw["draft"] is False                       # решение шага 5: PR сразу готов к ревью
     assert kw["head"] == "docagent/pr-demo-1"        # идемпотентная ветка по thread
+    assert kw["base"] == "main"
     assert "Docs:" in kw["title"]
 
 
@@ -254,6 +279,30 @@ def test_publish_updates_existing_branch_pr():
     res = publisher.publish_to_github(state, s, client=C())
     assert captured["parent"] == "branchhead123"   # parent = HEAD ветки, не main
     assert res["updated"] is True and res["pr_number"] == 42
+
+
+def test_publish_escalation_stays_draft():
+    """Эскалация needs_human_edit — исключение: PR публикуется как draft,
+    чтобы неготовый черновик не выглядел готовым к мержу."""
+    from docagent.config import Settings
+    from docagent.github_int import publisher
+
+    s = Settings(publish_target="github")
+    state = {
+        "thread_id": "pr-escalated",
+        "payload": {
+            "pr_ref": "https://github.com/foo/bar/pull/1",
+            "commit_message": "docs: auto",
+            "body_md": "## body",
+            "needs_human_edit": True,
+            "files": [{"path": "docs/api-reference.md", "target": "api-reference",
+                       "content_md": "text about Client", "action": "append"}],
+        },
+    }
+    fc = FakePublishClient()
+    res = publisher.publish_to_github(state, s, client=fc)
+    assert res["pr_number"] == 42
+    assert fc.repo_obj.prs[0]["draft"] is True
 
 
 def test_repo_slug_windows_path_falls_back_to_demo():

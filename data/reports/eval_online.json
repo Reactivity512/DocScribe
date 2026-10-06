@@ -1,0 +1,31 @@
+{
+  "totals": {
+    "runs": 1,
+    "published": 1,
+    "silent_skipped": 0,
+    "merged_by_lead": 0,
+    "awaiting_review": 1,
+    "merged_rate": 0.0,
+    "revisions_to_merge_avg": null,
+    "revisions_to_merge_max": null,
+    "merged_without_revision": 0
+  },
+  "by_intent": {},
+  "threads": [
+    {
+      "thread_id": "pr-gold-005",
+      "status": [
+        "published",
+        "drafts_ok",
+        "published"
+      ],
+      "behavior": "write_docs",
+      "pr": null,
+      "pr_url": "",
+      "publish_target": "",
+      "revisions": 0,
+      "comments_seen": 0,
+      "outcome": "no_watch"
+    }
+  ]
+}

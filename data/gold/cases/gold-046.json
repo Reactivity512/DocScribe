@@ -21,7 +21,7 @@
       "demopkg/exporters.py"
     ],
     "summary": "Удалена публичная функция export_to_orc(); в __all__ её больше нет.",
-    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -30,15 +30,6 @@ def export_to_parquet(df, path, compression=\"snappy\"):\n     df.to_parquet(path, compression=compression)\n \n \n-def export_to_orc(df, path):\n-    \"\"\"Сохранить DataFrame в формате ORC (deprecated с 0.4).\"\"\"\n-    warnings.warn(\"export_to_orc is deprecated, use export_to_parquet\",\n-                  DeprecationWarning, stacklevel=2)\n-    df.to_parquet(path)\n-\n-\n-__all__ = [\"export_to_csv\", \"export_to_parquet\", \"export_to_orc\"]\n+__all__ = [\"export_to_csv\", \"export_to_parquet\"]\n",
+    "diff": "diff --git a/demopkg/exporters.py b/demopkg/exporters.py\n--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -30,11 +30,4 @@ def export_to_parquet(df, path, compression=\"snappy\"):\n     df.to_parquet(path, compression=compression)\n \n \n-def export_to_orc(df, path):\n-    \"\"\"Сохранить DataFrame в формате ORC (deprecated с 0.4).\"\"\"\n-    warnings.warn(\"export_to_orc is deprecated, use export_to_parquet\",\n-                  DeprecationWarning, stacklevel=2)\n-    df.to_parquet(path)\n-\n-\n-__all__ = [\"export_to_csv\", \"export_to_parquet\", \"export_to_orc\"]\n+__all__ = [\"export_to_csv\", \"export_to_parquet\"]\n",
     "public_api_impact": "removed"
   },
   "docs_change": {

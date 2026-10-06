@@ -20,7 +20,7 @@
       "demopkg/settings.py"
     ],
     "summary": "Переменная DEMOPKG_LOG_LEVEL теперь поддерживает значение JSON вместо текстового вывода логов.",
-    "diff": "--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -22,7 +22,7 @@ class Settings(BaseSettings):\n-    log_level: str = \"INFO\"   # DEBUG, INFO, WARNING; текстовый вывод\n+    # DEMOPKG_LOG_LEVEL; JSON включает structured logging по одной записи на строку\n+    log_level: str = \"INFO\"   # DEBUG, INFO, WARNING, JSON\n     log_format: str = \"text\"\n",
+    "diff": "diff --git a/demopkg/settings.py b/demopkg/settings.py\n--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -22,2 +22,3 @@ class Settings(BaseSettings):\n-    log_level: str = \"INFO\"   # DEBUG, INFO, WARNING; текстовый вывод\n+    # DEMOPKG_LOG_LEVEL; JSON включает structured logging по одной записи на строку\n+    log_level: str = \"INFO\"   # DEBUG, INFO, WARNING, JSON\n     log_format: str = \"text\"\n",
     "public_api_impact": "changed"
   },
   "docs_change": {

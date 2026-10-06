@@ -22,7 +22,7 @@
       "demopkg/__init__.py"
     ],
     "summary": "Удалена публичная функция normalize_strings(), ранее публиковавшаяся через demopkg.__all__.",
-    "diff": "--- a/demopkg/__init__.py\n+++ b/demopkg/__init__.py\n@@ -4,7 +4,6 @@ from .client import APIClient\n from .exporters import export_to_csv\n-from .utils.deprecated import normalize_strings\n \n-__all__ = [\"APIClient\", \"export_to_csv\", \"normalize_strings\"]\n+__all__ = [\"APIClient\", \"export_to_csv\"]\n--- a/demopkg/utils/deprecated.py\n+++ /dev/null\n@@ -1,9 +0,0 @@\n-def normalize_strings(df, columns, lower=True):\n-    \"\"\"Deprecated: use demopkg.text.clean instead.\"\"\"\n-    ...\n",
+    "diff": "diff --git a/demopkg/__init__.py b/demopkg/__init__.py\n--- a/demopkg/__init__.py\n+++ b/demopkg/__init__.py\n@@ -4,4 +4,3 @@ from .client import APIClient\n from .exporters import export_to_csv\n-from .utils.deprecated import normalize_strings\n \n-__all__ = [\"APIClient\", \"export_to_csv\", \"normalize_strings\"]\n+__all__ = [\"APIClient\", \"export_to_csv\"]\ndiff --git a/demopkg/utils/deprecated.py b/demopkg/utils/deprecated.py\n--- a/demopkg/utils/deprecated.py\n+++ /dev/null\n@@ -1,3 +0,0 @@\n-def normalize_strings(df, columns, lower=True):\n-    \"\"\"Deprecated: use demopkg.text.clean instead.\"\"\"\n-    ...\n",
     "public_api_impact": "removed"
   },
   "docs_change": {

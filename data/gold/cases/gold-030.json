@@ -20,7 +20,7 @@
       ".github/workflows/ci.yml"
     ],
     "summary": "В CI добавлен job с кэшем pip и поднят timeout сборки.",
-    "diff": "--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -12,6 +12,10 @@ jobs:\n     steps:\n       - uses: actions/checkout@v4\n+      - uses: actions/cache@v4\n+        with:\n+          path: ~/.cache/pip\n+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}\n       - run: pip install -e \".[dev]\"\n"
+    "diff": "diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml\n--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -12,3 +12,7 @@ jobs:\n     steps:\n       - uses: actions/checkout@v4\n+      - uses: actions/cache@v4\n+        with:\n+          path: ~/.cache/pip\n+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}\n       - run: pip install -e \".[dev]\"\n"
   },
   "docs_change": {
     "change_type": "none",

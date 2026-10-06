@@ -20,7 +20,7 @@
       ".pre-commit-config.yaml"
     ],
     "summary": "Добавлен хук mypy в pre-commit.",
-    "diff": "--- a/.pre-commit-config.yaml\n+++ b/.pre-commit-config.yaml\n@@ -8,3 +8,7 @@ repos:\n       - id: ruff\n+  - repo: https://github.com/pre-commit/mirrors-mypy\n+    rev: v1.11.0\n+    hooks:\n+      - id: mypy\n"
+    "diff": "diff --git a/.pre-commit-config.yaml b/.pre-commit-config.yaml\n--- a/.pre-commit-config.yaml\n+++ b/.pre-commit-config.yaml\n@@ -8,1 +8,5 @@ repos:\n       - id: ruff\n+  - repo: https://github.com/pre-commit/mirrors-mypy\n+    rev: v1.11.0\n+    hooks:\n+      - id: mypy\n"
   },
   "docs_change": {
     "change_type": "none",

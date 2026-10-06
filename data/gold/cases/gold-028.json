@@ -20,7 +20,7 @@
       "tests/test_exporters.py"
     ],
     "summary": "Тесты переписаны с unittest-подобных assert на pytest.raises; код пакета не менялся.",
-    "diff": "--- a/tests/test_exporters.py\n+++ b/tests/test_exporters.py\n@@ -5,8 +5,8 @@ def test_export_to_csv(tmp_path):\n-    try:\n-        export_to_csv(df, tmp_path / \"out.csv\")\n-    except Exception as exc:\n-        assert False, exc\n+    export_to_csv(df, tmp_path / \"out.csv\")\n+    assert (tmp_path / \"out.csv\").exists()\n"
+    "diff": "diff --git a/tests/test_exporters.py b/tests/test_exporters.py\n--- a/tests/test_exporters.py\n+++ b/tests/test_exporters.py\n@@ -5,4 +5,2 @@ def test_export_to_csv(tmp_path):\n-    try:\n-        export_to_csv(df, tmp_path / \"out.csv\")\n-    except Exception as exc:\n-        assert False, exc\n+    export_to_csv(df, tmp_path / \"out.csv\")\n+    assert (tmp_path / \"out.csv\").exists()\n"
   },
   "docs_change": {
     "change_type": "none",

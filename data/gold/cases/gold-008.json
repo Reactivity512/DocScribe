@@ -20,7 +20,7 @@
       "demopkg/bench.py"
     ],
     "summary": "Добавлен CLI `python -m demopkg.bench` для измерения пропускной способности экспорта.",
-    "diff": "--- a/demopkg/bench.py\n+++ b/demopkg/bench.py\n@@ new file mode 100644\n+def main(argv=None):\n+    \"\"\"Run an export benchmark and print rows/sec.\"\"\"\n+    parser = argparse.ArgumentParser(prog=\"python -m demopkg.bench\")\n+    parser.add_argument(\"--rows\", type=int, default=100_000)\n+    parser.add_argument(\"--format\", choices=[\"csv\", \"parquet\"], default=\"parquet\")\n+    parser.add_argument(\"--output\", default=\"/tmp/bench\")\n"
+    "diff": "diff --git a/demopkg/bench.py b/demopkg/bench.py\n--- a/demopkg/bench.py\n+++ b/demopkg/bench.py\n@@ new file mode 100644\n+def main(argv=None):\n+    \"\"\"Run an export benchmark and print rows/sec.\"\"\"\n+    parser = argparse.ArgumentParser(prog=\"python -m demopkg.bench\")\n+    parser.add_argument(\"--rows\", type=int, default=100_000)\n+    parser.add_argument(\"--format\", choices=[\"csv\", \"parquet\"], default=\"parquet\")\n+    parser.add_argument(\"--output\", default=\"/tmp/bench\")\n"
   },
   "docs_change": {
     "change_type": "add",

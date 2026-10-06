@@ -21,7 +21,7 @@
       "demopkg/text.py"
     ],
     "summary": "Приватный модуль utils.text перемещён в text; публичные реэкспорты не менялись.",
-    "diff": "--- a/demopkg/utils/text.py\n+++ /dev/null\n@@ -1,6 +0,0 @@\n-def _strip_accents(value):\n-    ...\n--- /dev/null\n+++ b/demopkg/text.py\n@@ new file mode 100644\n+def _strip_accents(value):\n+    ...\n",
+    "diff": "diff --git a/demopkg/utils/text.py b/demopkg/utils/text.py\n--- a/demopkg/utils/text.py\n+++ /dev/null\n@@ -1,2 +0,0 @@\n-def _strip_accents(value):\n-    ...\ndiff --git a/demopkg/text.py b/demopkg/text.py\n--- /dev/null\n+++ b/demopkg/text.py\n@@ new file mode 100644\n+def _strip_accents(value):\n+    ...\n",
     "public_api_impact": "none"
   },
   "docs_change": {

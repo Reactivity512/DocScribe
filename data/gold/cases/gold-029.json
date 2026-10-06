@@ -20,7 +20,7 @@
       "demopkg/cache.py"
     ],
     "summary": "Внутренняя оптимизация: словарь вместо списка при поиске ключа; публичный get_cached() не изменился.",
-    "diff": "--- a/demopkg/cache.py\n+++ b/demopkg/cache.py\n@@ -18,9 +18,9 @@ _INDEX = []\n-def _find(key):\n-    for entry in _INDEX:\n-        if entry[0] == key:\n-            return entry[1]\n+def _find(key):\n+    for entry in _INDEX.values():\n+        if entry[\"key\"] == key:\n+            return entry[\"value\"]\n     return None\n",
+    "diff": "diff --git a/demopkg/cache.py b/demopkg/cache.py\n--- a/demopkg/cache.py\n+++ b/demopkg/cache.py\n@@ -18,5 +18,5 @@ _INDEX = []\n-def _find(key):\n-    for entry in _INDEX:\n-        if entry[0] == key:\n-            return entry[1]\n+def _find(key):\n+    for entry in _INDEX.values():\n+        if entry[\"key\"] == key:\n+            return entry[\"value\"]\n     return None\n",
     "public_api_impact": "none"
   },
   "docs_change": {

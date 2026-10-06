@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import os
 import subprocess
+import urllib.error
+import urllib.request
 from pathlib import Path
 
-from github import Github, GithubException
+from github import Auth, Github, GithubException, InputGitTreeElement
 from github.Requester import Requester  # noqa: F401  (типизация)
 
 from ..config import Settings, get_settings
@@ -28,8 +30,9 @@ class GitHubClient:
                 "GitHub token не задан: экспортируй GITHUB_TOKEN=... "
                 "или DOCAGENT_GITHUB_TOKEN=...")
         base = self.s.github_api_base.rstrip("/")
-        self.api = Github(tok, base_url=base) if base != "https://api.github.com" \
-            else Github(tok)
+        auth = Auth.Token(tok)  # github.Auth: старый login_or_token даёт DeprecationWarning
+        self.api = Github(auth=auth, base_url=base) if base != "https://api.github.com" \
+            else Github(auth=auth)
         self.token = tok
 
     # ------------------------------------------------------------- read side
@@ -40,15 +43,30 @@ class GitHubClient:
         return self.repo(slug).get_pull(number)
 
     def diff_text(self, slug: str, number: int) -> str:
-        """Unified diff PR'а одним HTTP-запросом (Accept: vnd.github.diff)."""
-        requester = self.api._Github__requester  # type: ignore[attr-defined]
-        _, owner, name = slug.partition("/")
-        url = f"/repos/{owner}/{name}/pulls/{number}"
-        status, rdata, _ = requester.requestJson(
-            "GET", url, headers={"Accept": "application/vnd.github.diff"})
-        if status != 200:
-            raise GithubException(status, rdata, None)
-        return rdata.decode("utf-8", errors="replace")
+        """Unified diff PR'а одним HTTP-запросом (Accept: vnd.github.diff).
+
+        Ходим напрямую через urllib, а не через внутренний `requestJson` PyGithub:
+        тот возвращает тело то строкой, то разобранным JSON/dict (в зависимости от
+        Content-Type) и при сбое чтения silently повторяет запрос — на diff-эндпоинте
+        это давало вместо diff-а JSON-ошибку сервера. Здесь контракт один: 200 ->
+        текст diff-а, иначе GithubException.
+        """
+        owner, _, name = slug.partition("/")
+        if not owner or not name:
+            raise ValueError(f"diff_text: ожидается 'owner/repo', получено {slug!r}")
+        url = f"{self.s.github_api_base.rstrip('/')}/repos/{owner}/{name}/pulls/{number}"
+        req = urllib.request.Request(url, headers={
+            "Accept": "application/vnd.github.diff",
+            "Authorization": f"Bearer {self.token}",
+            "User-Agent": "docagent",
+            "X-GitHub-Api-Version": "2022-11-28",
+        })
+        try:
+            with urllib.request.urlopen(req, timeout=self.s.llm_timeout_s) as resp:
+                return resp.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", errors="replace")[:300]
+            raise GithubException(e.code, detail, None) from e
 
     def changed_files(self, slug: str, number: int) -> list[dict]:
         """Файлы PR (patch может отсутствовать для бинарников)."""
@@ -56,6 +74,28 @@ class GitHubClient:
         return [{"filename": f.filename, "status": f.status,
                  "additions": f.additions, "deletions": f.deletions,
                  "patch": getattr(f, "patch", None)} for f in pr.get_files()]
+
+    def pull_meta(self, slug: str, number: int) -> dict:
+        """Метаданные PR одним объектом — для ноды fetch_pr (шаг 4).
+
+        Один запрос get_pull + get_files; тело PR нужно промпту, слаг/номер —
+        ветке публикации (шаг 5), поэтому отдаём их вместе с diff-ом.
+        """
+        pr = self.pr(slug, number)
+        return {
+            "slug": slug,
+            "number": number,
+            "title": pr.title,
+            "body": pr.body or "",
+            "author": pr.user.login if pr.user else "",
+            "state": pr.state,
+            "draft": bool(pr.draft),
+            "merged": bool(pr.merged),
+            "base": pr.base.ref,
+            "head": pr.head.ref,
+            "head_sha": pr.head.sha,
+            "changed_files": [f.filename for f in pr.get_files()],
+        }
 
     def clone_head(self, slug: str, number: int) -> Path:
         """Shallow-клон head-рефа PR (для чтения полного контекста файлов)."""
@@ -120,8 +160,11 @@ class GitHubClient:
         for f in files:
             blob = repo.create_git_blob(f["content"], "base64" if f.get("b64")
                                         else "utf-8")
-            tree_items.append({"path": f["path"], "mode": "100644",
-                               "type": "blob", "sha": blob.sha})
+            # PyGithub требует объекты InputGitTreeElement, а не dict:
+            # create_git_tree() ассертит тип каждого элемента и читает
+            # element._identity (иначе AssertionError на plain dict).
+            tree_items.append(InputGitTreeElement(path=f["path"], mode="100644",
+                                                  type="blob", sha=blob.sha))
         base_commit = repo.get_git_commit(base_ref)
         try:
             tree = repo.create_git_tree(tree_items, base_commit.tree)
@@ -136,11 +179,63 @@ class GitHubClient:
         return commit.sha
 
     def open_draft_pr(self, slug: str, branch: str, title: str, body: str,
-                      base: str = "main") -> dict:
+                      base: str = "main", draft: bool = False) -> dict:
+        """Создаёт PR. По умолчанию готовый к ревью (не draft) — решение шага 5:
+        «одобрение» выражается мержем лида, поэтому draft только для эскалации."""
         repo = self.repo(slug)
         pr = repo.create_pull(title=title, body=body, head=branch, base=base,
-                              draft=True)
+                              draft=draft)
         return {"number": pr.number, "html_url": pr.html_url}
+
+    # ------------------------------------------------- шаг 5: цикл ревью
+    def find_pr(self, slug: str, branch: str) -> dict | None:
+        """Открытый PR по ветке бота (для watcher'а). None — PR нет/закрыт."""
+        repo = self.repo(slug)
+        owner = slug.split("/")[0]
+        for state in ("open", "closed"):
+            prs = list(repo.get_pulls(state=state, head=f"{owner}:{branch}"))
+            if prs:
+                pr = prs[0]
+                return {"number": pr.number, "url": pr.html_url, "state": pr.state,
+                        "merged": bool(pr.merged), "draft": bool(pr.draft),
+                        "title": pr.title}
+        return None
+
+    def bot_login(self) -> str:
+        try:
+            return self.whoami()
+        except Exception:  # noqa: BLE001 — без логина просто не фильтруем автора
+            return ""
+
+    def list_comments(self, slug: str, number: int) -> list[dict]:
+        """Issue + review-комментарии PR одним списком (шаг 5).
+
+        Собираем оба канала: лид может ответить и обычным комментарием, и в
+        review-треде конкретной строки diff-а.
+        """
+        pr = self.pr(slug, number)
+        out: list[dict] = []
+        for c in pr.get_issue_comments():
+            out.append({"id": c.id, "kind": "issue", "author": c.user.login,
+                        "body": c.body or "", "created_at": str(c.created_at),
+                        "url": c.html_url})
+        for c in pr.get_review_comments():
+            out.append({"id": c.id, "kind": "review", "author": c.user.login,
+                        "body": c.body or "", "created_at": str(c.created_at),
+                        "url": c.html_url})
+        out.sort(key=lambda x: x["created_at"])
+        return out
+
+    def comment(self, slug: str, number: int, body: str) -> dict:
+        pr = self.pr(slug, number)
+        c = pr.create_issue_comment(body)
+        return {"id": c.id, "url": c.html_url}
+
+    def review_ready(self, slug: str, number: int, body: str = "") -> None:
+        """APPROVE-review: помечает PR как одобренный ботом (не мерж)."""
+        pr = self.pr(slug, number)
+        pr.create_review(body=body or "DocAgent: документация готова к мержу.",
+                         event="APPROVE")
 
     def whoami(self) -> str:
         return self.api.get_user().login

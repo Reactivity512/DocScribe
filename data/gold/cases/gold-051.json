@@ -20,7 +20,7 @@
       "demopkg/pipeline.py"
     ],
     "summary": "Извлечён приватный _apply_stage; публичные методы те же. В коде осталось слово 'public API' в комментарии.",
-    "diff": "--- a/demopkg/pipeline.py\n+++ b/demopkg/pipeline.py\n@@ -40,12 +40,16 @@ class Pipeline:\n     def run(self, data):\n-        for stage in self.stages:\n-            data = stage.apply(data)\n+        return self._apply_stages(data)\n+\n+    def _apply_stages(self, data):\n+        # helper for the public API surface (run/astage)\n+        for stage in self.stages:\n+            data = stage.apply(data)\n         return data\n",
+    "diff": "diff --git a/demopkg/pipeline.py b/demopkg/pipeline.py\n--- a/demopkg/pipeline.py\n+++ b/demopkg/pipeline.py\n@@ -40,4 +40,8 @@ class Pipeline:\n     def run(self, data):\n-        for stage in self.stages:\n-            data = stage.apply(data)\n+        return self._apply_stages(data)\n+\n+    def _apply_stages(self, data):\n+        # helper for the public API surface (run/astage)\n+        for stage in self.stages:\n+            data = stage.apply(data)\n         return data\n",
     "public_api_impact": "none"
   },
   "docs_change": {

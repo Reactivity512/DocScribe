@@ -22,7 +22,7 @@
       "demopkg/settings.py"
     ],
     "summary": "Требуемая версия Python поднята до 3.11, добавлена обязательная переменная DEMOPKG_API_TOKEN.",
-    "diff": "--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -8,7 +8,7 @@\n [project]\n name = \"demopkg\"\n-requires-python = \">=3.9\"\n+requires-python = \">=3.11\"\n dependencies = [\"pandas>=2.0\", \"openai>=1.40\"]\n--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -12,6 +12,7 @@ class Settings(BaseSettings):\n+    api_token: str  # обязательное поле, читается из DEMOPKG_API_TOKEN\n     page_size: int = 50\n",
+    "diff": "diff --git a/pyproject.toml b/pyproject.toml\n--- a/pyproject.toml\n+++ b/pyproject.toml\n@@ -8,4 +8,4 @@\n [project]\n name = \"demopkg\"\n-requires-python = \">=3.9\"\n+requires-python = \">=3.11\"\n dependencies = [\"pandas>=2.0\", \"openai>=1.40\"]\ndiff --git a/demopkg/settings.py b/demopkg/settings.py\n--- a/demopkg/settings.py\n+++ b/demopkg/settings.py\n@@ -12,1 +12,2 @@ class Settings(BaseSettings):\n+    api_token: str  # обязательное поле, читается из DEMOPKG_API_TOKEN\n     page_size: int = 50\n",
     "public_api_impact": "changed"
   },
   "docs_change": {

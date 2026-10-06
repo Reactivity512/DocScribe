@@ -21,7 +21,7 @@
       "demopkg/streaming.py"
     ],
     "summary": "В StreamProcessor добавлен backpressure: max_buffer параметр, при переполнении — BlockTimeout.",
-    "diff": "--- a/demopkg/streaming.py\n+++ b/demopkg/streaming.py\n@@ -8,10 +8,17 @@ class StreamProcessor:\n-    def __init__(self, handler):\n+    def __init__(self, handler, max_buffer: int = 1024):\n         self.handler = handler\n+        self.max_buffer = max_buffer\n         self._queue = deque()\n \n     def push(self, item):\n+        if len(self._queue) >= self.max_buffer:\n+            raise BlockTimeout(f\"buffer full ({self.max_buffer})\")\n         self._queue.append(item)\n",
+    "diff": "diff --git a/demopkg/streaming.py b/demopkg/streaming.py\n--- a/demopkg/streaming.py\n+++ b/demopkg/streaming.py\n@@ -8,6 +8,9 @@ class StreamProcessor:\n-    def __init__(self, handler):\n+    def __init__(self, handler, max_buffer: int = 1024):\n         self.handler = handler\n+        self.max_buffer = max_buffer\n         self._queue = deque()\n \n     def push(self, item):\n+        if len(self._queue) >= self.max_buffer:\n+            raise BlockTimeout(f\"buffer full ({self.max_buffer})\")\n         self._queue.append(item)\n",
     "public_api_impact": "added"
   },
   "docs_change": {

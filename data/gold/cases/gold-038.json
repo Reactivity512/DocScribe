@@ -20,7 +20,7 @@
       "docs/guide/inference.md"
     ],
     "summary": "Автор сам добавил раздел документации без изменений в коде.",
-    "diff": "--- a/docs/guide/inference.md\n+++ b/docs/guide/inference.md\n@@ -60,6 +60,14 @@\n+### Ограничения модели\n+\n+* Поддерживаются только модели с одним входом.\n+* Размер входного изображения фиксирован — 224x224.\n"
+    "diff": "diff --git a/docs/guide/inference.md b/docs/guide/inference.md\n--- a/docs/guide/inference.md\n+++ b/docs/guide/inference.md\n@@ -60,0 +60,4 @@\n+### Ограничения модели\n+\n+* Поддерживаются только модели с одним входом.\n+* Размер входного изображения фиксирован — 224x224.\n"
   },
   "docs_change": {
     "change_type": "none",

@@ -21,7 +21,7 @@
       "demopkg/auth.py"
     ],
     "summary": "Добавлен класс APITokenAuth — аутентификация по Bearer-токенам.",
-    "diff": "--- /dev/null\n+++ b/demopkg/auth.py\n@@ -0,0 +1,22 @@\n+\"\"\"Токенная аутентификация для DemoClient.\"\"\"\n+from __future__ import annotations\n+\n+import os\n+\n+\n+class APITokenAuth:\n+    \"\"\"Аутентификация по статическому Bearer-токену.\n+\n+    Args:\n+        token: Bearer-токен. Если не передан, читается из env DEMO_API_TOKEN.\n+    \"\"\"\n+\n+    def __init__(self, token: str | None = None):\n+        self._token = token or os.environ.get(\"DEMO_API_TOKEN\", \"\")\n+\n+    def headers(self) -> dict[str, str]:\n+        return {\"Authorization\": f\"Bearer {self._token}\"}\n+\n+\n+__all__ = [\"APITokenAuth\"]\n",
+    "diff": "diff --git a/demopkg/auth.py b/demopkg/auth.py\n--- /dev/null\n+++ b/demopkg/auth.py\n@@ -0,0 +1,21 @@\n+\"\"\"Токенная аутентификация для DemoClient.\"\"\"\n+from __future__ import annotations\n+\n+import os\n+\n+\n+class APITokenAuth:\n+    \"\"\"Аутентификация по статическому Bearer-токену.\n+\n+    Args:\n+        token: Bearer-токен. Если не передан, читается из env DEMO_API_TOKEN.\n+    \"\"\"\n+\n+    def __init__(self, token: str | None = None):\n+        self._token = token or os.environ.get(\"DEMO_API_TOKEN\", \"\")\n+\n+    def headers(self) -> dict[str, str]:\n+        return {\"Authorization\": f\"Bearer {self._token}\"}\n+\n+\n+__all__ = [\"APITokenAuth\"]\n",
     "public_api_impact": "added"
   },
   "docs_change": {

@@ -20,7 +20,7 @@
       "docs/api-reference.md"
     ],
     "summary": "Исправлены битые относительные ссылки на разделы руководства.",
-    "diff": "--- a/docs/api-reference.md\n+++ b/docs/api-reference.md\n@@ -77,7 +77,7 @@ See the\n-[guide](../guides/inference.md)\n+[guide](../guide/inference.md)\n"
+    "diff": "diff --git a/docs/api-reference.md b/docs/api-reference.md\n--- a/docs/api-reference.md\n+++ b/docs/api-reference.md\n@@ -77,1 +77,1 @@ See the\n-[guide](../guides/inference.md)\n+[guide](../guide/inference.md)\n"
   },
   "docs_change": {
     "change_type": "none",

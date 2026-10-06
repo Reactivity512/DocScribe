@@ -1,0 +1,7 @@
+diff --git a/p.py b/p.py
+--- a/p.py
++++ b/p.py
+@@ -1,2 +1,2 @@
+ line one
+-line two
++line three

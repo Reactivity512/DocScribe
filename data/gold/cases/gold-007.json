@@ -21,7 +21,7 @@
       "examples/image_classify.py"
     ],
     "summary": "Добавлен класс ImageClassifier для локального инференса; приложен runnable-пример.",
-    "diff": "--- a/demopkg/inference.py\n+++ b/demopkg/inference.py\n@@ new file mode 100644\n+class ImageClassifier:\n+    \"\"\"Локальная классификация изображений по модели ONNX.\"\"\"\n+\n+    def __init__(self, model_path, labels_path):\n+        ...\n+\n+    def predict(self, image, top_k=3):\n+        \"\"\"Вернуть top_k пар (метка, вероятность).\"\"\"\n+        ...\n--- a/examples/image_classify.py\n+++ b/examples/image_classify.py\n@@ new file mode 100644\n+from demopkg.inference import ImageClassifier\n+clf = ImageClassifier(\"model.onnx\", \"labels.txt\")\n+print(clf.predict(\"cat.jpg\", top_k=2))\n",
+    "diff": "diff --git a/demopkg/inference.py b/demopkg/inference.py\n--- a/demopkg/inference.py\n+++ b/demopkg/inference.py\n@@ new file mode 100644\n+class ImageClassifier:\n+    \"\"\"Локальная классификация изображений по модели ONNX.\"\"\"\n+\n+    def __init__(self, model_path, labels_path):\n+        ...\n+\n+    def predict(self, image, top_k=3):\n+        \"\"\"Вернуть top_k пар (метка, вероятность).\"\"\"\n+        ...\ndiff --git a/examples/image_classify.py b/examples/image_classify.py\n--- a/examples/image_classify.py\n+++ b/examples/image_classify.py\n@@ new file mode 100644\n+from demopkg.inference import ImageClassifier\n+clf = ImageClassifier(\"model.onnx\", \"labels.txt\")\n+print(clf.predict(\"cat.jpg\", top_k=2))\n",
     "public_api_impact": "added"
   },
   "docs_change": {

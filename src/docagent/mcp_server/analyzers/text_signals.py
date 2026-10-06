@@ -155,6 +155,16 @@ _TOML_VALUE_RE = re.compile(r"""^\s*([A-Za-z_][A-Za-z0-9_-]*)\s*=\s*(.+)$""")
 _SEMANTIC_VALUES = {"json", "text", "true", "false", "none"}
 
 
+def _unquote(value: str) -> str:
+    """Снимает внешние кавычки и пробелы: '"json"' -> 'json'.
+
+    Раньше здесь стояло `value.strip(' "', "'")` — два аргумента у str.strip,
+    то есть TypeError. Ветка не выполнялась, пока diff-парсер не видел удалённые
+    строки конфигов, поэтому баг всплыл только после починки gold-сетов.
+    """
+    return value.strip().strip("\"'").strip()
+
+
 def _fields(lines: list[str]) -> dict[str, str]:
     out: dict[str, str] = {}
     for l in lines:
@@ -234,7 +244,8 @@ def detect_config_env(parsed: list[ParsedFile]) -> tuple[str, list[str], str] | 
             a_map = {m.group(1).upper(): m.group(2) for m in
                      (_TOML_VALUE_RE.match(l) for l in f.added_lines) if m}
             for key in sorted(set(a_map) & set(b_map)):
-                if a_map[key].strip(' "', "'").lower() != b_map[key].strip(' "', "'").lower():
+                # strip(' "', "'") — два аргумента, TypeError: снимаем кавычки явно
+                if _unquote(a_map[key]).lower() != _unquote(b_map[key]).lower():
                     file_used = file_used or f.path
                     hits.append(key)
                     detail_bits.append(f"значение опции {key}: {b_map[key]} → {a_map[key]}")

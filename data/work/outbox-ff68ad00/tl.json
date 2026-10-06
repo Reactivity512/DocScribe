@@ -1,0 +1,31 @@
+{
+  "payload": {
+    "pr_ref": "gold-005",
+    "branch": "docagent/auto-docs",
+    "commit_message": "docs: автообновление документации (api-reference)",
+    "body_md": "## 📝 Docs update proposal (автосген, шаг 3)\n\nPR: `gold-005` · язык: ru\n\n### Изменяемые файлы\n- `docs/api-reference.md` (update, target: api-reference)\n_Черновик документации от DocAgent. Если правки верны — мержите PR; если нужны изменения — оставьте комментарий, и я перепишу._\n\n---\n⛔ Достигнут лимит автоправок (3). Требуется ручная правка человеком.\n",
+    "files": [
+      {
+        "path": "docs/api-reference.md",
+        "content_md": "### Изменения: - demopkg/settings.py (get_cached): [R-api-added] def get_cached(key, ttl_seconds=300); - demopkg/settings.py (get): [R-api-added] def get_cached(key, ttl_seconds=300):",
+        "action": "update",
+        "anchor": "## Overview",
+        "target": "api-reference"
+      }
+    ],
+    "needs_human_edit": true
+  },
+  "approval": {
+    "decision": "changes",
+    "feedback": "всё равно плохо",
+    "reviewer": "lead"
+  },
+  "status_chain": [
+    "drafts_ok",
+    "revised_1",
+    "revised_2",
+    "revised_3",
+    "needs_human_edit"
+  ],
+  "revisions": 3
+}

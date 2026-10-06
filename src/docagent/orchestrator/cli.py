@@ -32,7 +32,8 @@ def _load_gold_diff(case_id: str) -> str:
 
 
 def _ask_human(payload_view: dict) -> dict:
-    """Консольный HITL. Шаг 5: этот ввод придёт из GitHub-комментариев/webhook."""
+    """Консольный HITL. В github-режиме решение приходит из комментариев PR
+    (шаг 5, `github_int.cli watch`), а этот ввод остаётся для локальных прогонов."""
     print("\n=== ОЖИДАЕТСЯ РЕШЕНИЕ TEAM LEAD ===")
     print(json.dumps(payload_view, ensure_ascii=False, indent=2))
     dec = input("decision [approve/reject/changes]: ").strip().lower()
@@ -40,6 +41,21 @@ def _ask_human(payload_view: dict) -> dict:
     if dec == "changes":
         fb = input("замечания для переписывания: ").strip()
     return {"decision": dec or "reject", "feedback": fb, "reviewer": "cli"}
+
+
+def _auto_thread_id(args) -> str:
+    """thread_id по умолчанию. Для PR — owner-repo-N.
+
+    Иначе имя ветки бота выводилось бы из хвоста URL («pr-1»), и два PR из разных
+    репозиториев с одинаковым номером перетирали бы тред и ветку друг друга.
+    """
+    ref = args.pr_ref or ""
+    from docagent.github_int.refs import parse_pr_ref
+    slug, num = parse_pr_ref(ref)
+    if slug and num:
+        return f"pr-{slug.replace('/', '-')}-{num}"
+    stem = Path(args.diff).stem if args.diff else (args.gold or "run")
+    return f"pr-{stem}"
 
 
 def main(argv=None):
@@ -80,16 +96,16 @@ def main(argv=None):
                     "reviewer": "cli"}
         result = graph.invoke(Command(resume=decision), cfg)
     else:
-        if not (args.gold or args.diff):
-            ap.error("нужно --gold <id> или --diff <path>")
+        if not (args.gold or args.diff or args.pr_ref):
+            ap.error("нужно --gold <id>, --diff <path> или --pr-ref <ссылка на PR>")
         diff = _load_gold_diff(args.gold) if args.gold else \
-            Path(args.diff).read_text(encoding="utf-8")
+            (Path(args.diff).read_text(encoding="utf-8") if args.diff else "")
         state_in = {
             "pr_ref": args.pr_ref or args.gold or args.diff,
             "diff_text": diff,
             "backend_name": args.backend,
             "lang": args.lang or "",
-            "thread_id": args.thread or f"pr-{args.gold or Path(args.diff).stem}",
+            "thread_id": args.thread or _auto_thread_id(args),
         }
         cfg["configurable"]["thread_id"] = state_in["thread_id"]
         result = graph.invoke(state_in, cfg)

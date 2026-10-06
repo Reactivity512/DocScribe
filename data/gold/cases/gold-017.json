@@ -22,7 +22,7 @@
       "pyproject.toml"
     ],
     "summary": "Бейджи и матрица CI версий рассогласованы с requires-python=3.11 — README врёт о поддержке 3.8.",
-    "diff": "--- a/README.md\n+++ b/README.md\n@@ -3,7 +3,7 @@\n-![python](https://img.shields.io/badge/python-3.8%2B-blue)\n+![python](https://img.shields.io/badge/python-3.11%2B-blue)\n--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -10,7 +10,7 @@ jobs:\n     strategy:\n       matrix:\n-        python-version: [\"3.8\", \"3.9\", \"3.10\"]\n+        python-version: [\"3.11\", \"3.12\"]\n"
+    "diff": "diff --git a/README.md b/README.md\n--- a/README.md\n+++ b/README.md\n@@ -3,1 +3,1 @@\n-![python](https://img.shields.io/badge/python-3.8%2B-blue)\n+![python](https://img.shields.io/badge/python-3.11%2B-blue)\ndiff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml\n--- a/.github/workflows/ci.yml\n+++ b/.github/workflows/ci.yml\n@@ -10,3 +10,3 @@ jobs:\n     strategy:\n       matrix:\n-        python-version: [\"3.8\", \"3.9\", \"3.10\"]\n+        python-version: [\"3.11\", \"3.12\"]\n"
   },
   "docs_change": {
     "change_type": "update",

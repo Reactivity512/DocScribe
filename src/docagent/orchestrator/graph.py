@@ -45,8 +45,10 @@ def build_graph(checkpointer: BaseCheckpointSaver):
     g.add_node("revise", N.revise)
     g.add_node("escalate_manual", N.escalate_manual)
     g.add_node("publish", N.publish)
+    g.add_node("publish_first", N.publish_first)
     g.add_node("finalize_silent", N.finalize_silent)
     g.add_node("finalize_rejected", N.finalize_rejected)
+    g.add_node("finalize_published", N.finalize_published)
 
     g.add_edge(START, "fetch_pr")
     g.add_edge("fetch_pr", "analyze_diff")
@@ -57,7 +59,16 @@ def build_graph(checkpointer: BaseCheckpointSaver):
                             {"self_check": "self_check",
                              "human_approval": "human_approval"})
     g.add_edge("self_check", "prepare_payload")
-    g.add_edge("prepare_payload", "human_approval")
+    # порядок шага 5: для github PR создаётся до ожидания ревью (publish_first ->
+    # HITL), для outbox interrupt остаётся до записи (prepare_payload -> human_approval).
+    # Публикация разведена на две ноды намеренно: цикл publish -> human_approval
+    # в LangGraph терял признаки, выставленные публикацией, и граф зацикливался.
+    g.add_conditional_edges("prepare_payload", N.route_after_payload,
+                            {"publish_first": "publish_first",
+                             "human_approval": "human_approval"})
+    g.add_conditional_edges("publish_first", N.route_after_first_publish,
+                            {"human_approval": "human_approval",
+                             "finalize_published": "finalize_published"})
     g.add_conditional_edges("human_approval", N.route_after_approval,
                             {"publish": "publish",
                              "revise": "revise",
@@ -65,9 +76,9 @@ def build_graph(checkpointer: BaseCheckpointSaver):
                              "finalize_rejected": "finalize_rejected"})
     g.add_edge("revise", "self_check")          # цикл правок через те же проверки
     g.add_edge("escalate_manual", "publish")    # лимит исчерпан -> публикуем с пометкой
-    g.add_edge("publish", END)
     g.add_edge("finalize_silent", END)
     g.add_edge("finalize_rejected", END)
+    g.add_edge("finalize_published", END)
 
     return g.compile(checkpointer=checkpointer)
 

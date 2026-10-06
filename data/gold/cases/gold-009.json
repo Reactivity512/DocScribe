@@ -21,7 +21,7 @@
       "demopkg/session.py"
     ],
     "summary": "Появился контекстный менеджер Session: автозакрытие соединения и повторное использование токена.",
-    "diff": "--- a/demopkg/session.py\n+++ b/demopkg/session.py\n@@ -18,6 +18,14 @@ class Session:\n     def __init__(self, token):\n         self.token = token\n+\n+    def __enter__(self):\n+        self.connect()\n+        return self\n+\n+    def __exit__(self, exc_type, exc, tb):\n+        self.close()\n+        return False\n"
+    "diff": "diff --git a/demopkg/session.py b/demopkg/session.py\n--- a/demopkg/session.py\n+++ b/demopkg/session.py\n@@ -18,2 +18,10 @@ class Session:\n     def __init__(self, token):\n         self.token = token\n+\n+    def __enter__(self):\n+        self.connect()\n+        return self\n+\n+    def __exit__(self, exc_type, exc, tb):\n+        self.close()\n+        return False\n"
   },
   "docs_change": {
     "change_type": "update",

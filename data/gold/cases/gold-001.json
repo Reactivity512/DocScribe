@@ -20,7 +20,7 @@
       "demopkg/exporters.py"
     ],
     "summary": "Добавлена публичная функция export_to_parquet() с параметром compression.",
-    "diff": "--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -12,6 +12,18 @@ def export_to_csv(df, path, sep=\",\"):\n     df.to_csv(path, sep=sep)\n \n \n+def export_to_parquet(df, path, compression=\"snappy\"):\n+    \"\"\"Сохранить DataFrame в формате Parquet.\n+\n+    Args:\n+        df: данные для выгрузки.\n+        path: целевой файл.\n+        compression: алгоритм сжатия, по умолчанию \"snappy\".\n+    \"\"\"\n+    df.to_parquet(path, compression=compression)\n+\n+\n __all__ = [\"export_to_csv\", \"export_to_parquet\"]\n",
+    "diff": "diff --git a/demopkg/exporters.py b/demopkg/exporters.py\n--- a/demopkg/exporters.py\n+++ b/demopkg/exporters.py\n@@ -12,4 +12,15 @@ def export_to_csv(df, path, sep=\",\"):\n     df.to_csv(path, sep=sep)\n \n \n+def export_to_parquet(df, path, compression=\"snappy\"):\n+    \"\"\"Сохранить DataFrame в формате Parquet.\n+\n+    Args:\n+        df: данные для выгрузки.\n+        path: целевой файл.\n+        compression: алгоритм сжатия, по умолчанию \"snappy\".\n+    \"\"\"\n+    df.to_parquet(path, compression=compression)\n+\n+\n __all__ = [\"export_to_csv\", \"export_to_parquet\"]\n",
     "public_api_impact": "added"
   },
   "docs_change": {

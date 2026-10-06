@@ -20,7 +20,7 @@
       "demopkg/session.py"
     ],
     "summary": "Исправлена опечатка в имени приватного атрибута _toke -> _token (внутреннее поле, не API).",
-    "diff": "--- a/demopkg/session.py\n+++ b/demopkg/session.py\n@@ -21,8 +21,8 @@ class Session:\n     def connect(self):\n-        self._toke = self._read_toke()\n-        return self._auth(self._toke)\n+        self._token = self._read_token()\n+        return self._auth(self._token)\n"
+    "diff": "diff --git a/demopkg/session.py b/demopkg/session.py\n--- a/demopkg/session.py\n+++ b/demopkg/session.py\n@@ -21,3 +21,3 @@ class Session:\n     def connect(self):\n-        self._toke = self._read_toke()\n-        return self._auth(self._toke)\n+        self._token = self._read_token()\n+        return self._auth(self._token)\n"
   },
   "docs_change": {
     "change_type": "none",

@@ -20,7 +20,7 @@
       "demopkg/pipeline.py"
     ],
     "summary": "Локальные переменные переименованы для читаемости внутри resize_batch; публичный API и поведение не менялись.",
-    "diff": "--- a/demopkg/pipeline.py\n+++ b/demopkg/pipeline.py\n@@ -52,9 +52,9 @@ def resize_batch(images, size, mode=\"bilinear\"):\n-        for i in range(size):\n-            tmp = _pad(images[i])\n-            out.append(_resize(tmp, size, mode))\n+        for idx in range(size):\n+            padded = _pad(images[idx])\n+            out.append(_resize(padded, size, mode))\n",
+    "diff": "diff --git a/demopkg/pipeline.py b/demopkg/pipeline.py\n--- a/demopkg/pipeline.py\n+++ b/demopkg/pipeline.py\n@@ -52,3 +52,3 @@ def resize_batch(images, size, mode=\"bilinear\"):\n-        for i in range(size):\n-            tmp = _pad(images[i])\n-            out.append(_resize(tmp, size, mode))\n+        for idx in range(size):\n+            padded = _pad(images[idx])\n+            out.append(_resize(padded, size, mode))\n",
     "public_api_impact": "none"
   },
   "docs_change": {

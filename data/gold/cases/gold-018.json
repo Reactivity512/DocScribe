@@ -22,7 +22,7 @@
       "CONTRIBUTING.md"
     ],
     "summary": "Для разработки нужен Docker (compose для Ollama) и команда make dev-setup.",
-    "diff": "--- a/Makefile\n+++ b/Makefile\n@@ -6,6 +6,9 @@ help:\n+# backend модели выбирается через DOCS_BACKEND=ollama|vllm (по умолчанию ollama)\n+dev-setup:\n+\tdocker compose up -d ollama\n+\tpip install -e \".[dev]\"\n+\n test:\n \tpytest\n"
+    "diff": "diff --git a/Makefile b/Makefile\n--- a/Makefile\n+++ b/Makefile\n@@ -6,2 +6,7 @@ help:\n+# backend модели выбирается через DOCS_BACKEND=ollama|vllm (по умолчанию ollama)\n+dev-setup:\n+\tdocker compose up -d ollama\n+\tpip install -e \".[dev]\"\n+\n test:\n \tpytest\n"
   },
   "docs_change": {
     "change_type": "update",

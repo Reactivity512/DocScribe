@@ -20,7 +20,7 @@
       "tests/test_auth.py"
     ],
     "summary": "Добавлены тесты на существующее поведение APITokenAuth (без изменений кода).",
-    "diff": "--- /dev/null\n+++ b/tests/test_auth.py\n@@ -0,0 +1,14 @@\n+import pytest\n+from demopkg.auth import APITokenAuth\n+\n+\n+def test_headers_contains_bearer(monkeypatch):\n+    monkeypatch.setenv(\"DEMO_API_TOKEN\", \"abc\")\n+    auth = APITokenAuth()\n+    assert auth.headers() == {\"Authorization\": \"Bearer abc\"}\n+\n+\n+def test_explicit_token_wins(monkeypatch):\n+    monkeypatch.setenv(\"DEMO_API_TOKEN\", \"abc\")\n+    assert APITokenAuth(\"xyz\").headers()[\"Authorization\"] == \"Bearer xyz\"\n",
+    "diff": "diff --git a/tests/test_auth.py b/tests/test_auth.py\n--- /dev/null\n+++ b/tests/test_auth.py\n@@ -0,0 +1,13 @@\n+import pytest\n+from demopkg.auth import APITokenAuth\n+\n+\n+def test_headers_contains_bearer(monkeypatch):\n+    monkeypatch.setenv(\"DEMO_API_TOKEN\", \"abc\")\n+    auth = APITokenAuth()\n+    assert auth.headers() == {\"Authorization\": \"Bearer abc\"}\n+\n+\n+def test_explicit_token_wins(monkeypatch):\n+    monkeypatch.setenv(\"DEMO_API_TOKEN\", \"abc\")\n+    assert APITokenAuth(\"xyz\").headers()[\"Authorization\"] == \"Bearer xyz\"\n",
     "public_api_impact": "none"
   },
   "docs_change": {
