@@ -36,6 +36,12 @@ class Settings(BaseSettings):
 
     docs_lang: str = "ru"  # ru | en
 
+    # --- оркестратор (шаг 3) ---------------------------------------------------
+    checkpoint_uri: str = ""  # пусто -> SqliteSaver в data/checkpoints.db;
+                              # postgres://... -> langgraph-checkpoint-postgres (прод)
+    outbox_dir: Path = REPO_ROOT / "data" / "outbox"
+    runs_log: Path = REPO_ROOT / "data" / "logs" / "runs.jsonl"
+
     # --- пороги pre-filter'а (§6 плана шага 0) --------------------------------
     typo_max_changed_lines: int = 6
     typo_min_new_words: int = 8
