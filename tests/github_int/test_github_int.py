@@ -100,7 +100,7 @@ class FakePublishRepo:
         self.created_branches = []
         self.prs = []
 
-    def get_content(self, path):
+    def get_content(self, path, ref=None):
         from github import GithubException
         raise GithubException(404, {}, None)
 
@@ -108,10 +108,12 @@ class FakePublishRepo:
         class B: commit = type("C", (), {"sha": self.branch_sha})()
         return B()
 
-    def get_git_ref(self, ref): 
-        class R:
-            def edit(_self, sha, force=False): pass
-        return R()
+    def get_git_ref(self, ref):
+        from github import GithubException
+        raise GithubException(404, {}, None)  # ветки нет — первый publish
+
+    def get_pulls(self, state="open", head=None):
+        return []
 
     def get_git_commit(self, sha):
         class T: pass
@@ -172,3 +174,83 @@ def test_publish_to_github_flow(monkeypatch):
     assert kw["draft"] is True                      # только draft PR
     assert kw["head"] == "docagent/pr-demo-1"        # идемпотентная ветка по thread
     assert "Docs:" in kw["title"]
+
+
+def test_publish_empty_diff_raises(monkeypatch):
+    """Регрессия на 'No commits between main and <branch>': если контент
+    черновика уже в файле — publish обязан упасть с внятной ошибкой, а не
+    создавать пустой PR."""
+    from docagent.config import Settings
+    from docagent.github_int import publisher
+
+    class ExistingContentRepo(FakePublishRepo):
+        """main уже содержит точно такой же блок -> files_out пуст."""
+        def get_content(self, path, ref=None):
+            existing_main = (
+                "# Api Reference\n\n"
+                "_Сгенерировано DocAgent (черновик, до одобрения team lead)._ \n\n"
+                "## DocAgent · api-reference\n\ntext about Client\n")
+            return type("R", (), {"decoded_content": existing_main.encode()})()
+
+    class C:
+        def repo(self, slug): return ExistingContentRepo()
+        def create_blob_commit(self, *a, **k): raise AssertionError("must not commit")
+        # ветки нет (FakePublishRepo.get_git_ref -> 404), контент совпадает с main
+        def open_draft_pr(self, *a, **k): raise AssertionError("must not open PR")
+
+    s = Settings(publish_target="github")
+    state = {
+        "thread_id": "pr-demo-1",
+        "payload": {
+            "pr_ref": "https://github.com/foo/bar/pull/1",
+            "files": [{"path": "docs/api-reference.md", "target": "api-reference",
+                       "content_md": "text about Client", "action": "append"}],
+        },
+    }
+    import pytest
+    with pytest.raises(RuntimeError, match="nothing to commit"):
+        publisher.publish_to_github(state, s, client=C())
+
+
+def test_publish_updates_existing_branch_pr():
+    """Регрессия на 'No commits between main and <branch>' при ревью-правках:
+    если ветка треда уже существует — коммит поверх её HEAD (не поверх main),
+    PR обновляется, дубль не создаётся."""
+    from docagent.config import Settings
+    from docagent.github_int import publisher
+
+    class BranchExistsRepo(FakePublishRepo):
+        def get_git_ref(self, ref):
+            o = type("O", (), {"sha": "branchhead123"})()
+            return type("R", (), {"object": o})()
+        def get_pulls(self, state="open", head=None):
+            pr = type("P", (), {"number": 42, "html_url": "https://github.com/foo/bar/pull/42",
+                                "edit": lambda self, **kw: None})()
+            self.edited = kw if False else None
+            return [pr]
+
+    captured = {}
+    class C(FakePublishClient):
+        def __init__(self):
+            self.repo_obj = BranchExistsRepo()
+        def create_blob_commit(self, slug, branch, base_ref, files, message):
+            captured["parent"] = base_ref
+            captured["files"] = files
+            return "newcommit"
+        def open_draft_pr(self, *a, **k):
+            raise AssertionError("must not open duplicate PR")
+
+    s = Settings(publish_target="github")
+    state = {
+        "thread_id": "pr-demo-1",
+        "payload": {
+            "pr_ref": "https://github.com/foo/bar/pull/1",
+            "commit_message": "docs: v2 after review",
+            "body_md": "## body v2",
+            "files": [{"path": "docs/api-reference.md", "target": "api-reference",
+                       "content_md": "UPDATED text about Client", "action": "append"}],
+        },
+    }
+    res = publisher.publish_to_github(state, s, client=C())
+    assert captured["parent"] == "branchhead123"   # parent = HEAD ветки, не main
+    assert res["updated"] is True and res["pr_number"] == 42

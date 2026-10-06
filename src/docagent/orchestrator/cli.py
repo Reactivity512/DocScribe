@@ -55,6 +55,11 @@ def main(argv=None):
                          "кейсы переиспользуют thread_id и статус-чейны склеиваются)")
     ap.add_argument("--resume", action="store_true", help="продолжить существующий thread")
     ap.add_argument("--thread", help="thread_id для --resume")
+    ap.add_argument("--pr-ref", default="",
+                    help="ссылка на реальный PR (url или owner/repo#N) — нужна ноде "
+                         "publish при DOCAGENT_PUBLISH_TARGET=github; без неё публикация "
+                         "ушла бы в base-репозиторий и GitHub вернул бы "
+                         "'No commits between main and <branch>'")
     ap.add_argument("--decision", default="approve",
                     choices=["approve", "reject", "changes"])
     ap.add_argument("--feedback", default="")
@@ -80,7 +85,7 @@ def main(argv=None):
         diff = _load_gold_diff(args.gold) if args.gold else \
             Path(args.diff).read_text(encoding="utf-8")
         state_in = {
-            "pr_ref": args.gold or args.diff,
+            "pr_ref": args.pr_ref or args.gold or args.diff,
             "diff_text": diff,
             "backend_name": args.backend,
             "lang": args.lang or "",

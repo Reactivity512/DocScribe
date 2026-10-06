@@ -66,7 +66,10 @@ def cmd_run(args):
     tmp = REPO / "data" / "work" / f"{args.repo.replace('/', '_')}-pr{args.pr}.diff"
     tmp.parent.mkdir(parents=True, exist_ok=True)
     tmp.write_text(diff, encoding="utf-8")
-    argv = ["--diff", str(tmp), "--backend", args.backend]
+    # pr_ref обязателен для github-publish: без него _repo_slug падает на
+    # demo_repo и ветка сливается с main -> "No commits between main and ..."
+    argv = ["--diff", str(tmp), "--backend", args.backend,
+            "--pr-ref", f"https://github.com/{args.repo}/pull/{args.pr}"]
     if args.auto_approve:
         argv.append("--auto-approve")
     return orch_main(argv)

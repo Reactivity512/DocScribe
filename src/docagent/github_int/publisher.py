@@ -52,23 +52,56 @@ def publish_to_github(state: dict, s: Settings, client: GitHubClient | None = No
     tid = re.sub(r"[^A-Za-z0-9_.-]", "_", state.get("thread_id", "run"))
     branch = f"{s.bot_branch_prefix}{tid}"
 
+    repo_obj = c.repo(slug)
+    branch_ref_sha = None
+    try:  # существующая ветка этого же треда => ОБНОВЛЕНИЕ PR, а не новый PR
+        branch_ref_sha = repo_obj.get_git_ref(f"heads/{branch}").object.sha
+    except Exception:
+        pass
+
     files_out = []
     for f in payload.get("files", []):
         existing = None
+        # при апдейте сравниваем с версией на НАШЕЙ ветке (её уже мержили в
+        # main? нет; но предыдущий пуш именно туда), иначе — с base
+        cmp_ref = {"ref": branch_ref_sha} if branch_ref_sha else {}
         try:
-            existing = c.repo(slug).get_content(f["path"]).decoded_content.decode()
+            existing = repo_obj.get_content(f["path"], **cmp_ref).decoded_content.decode()
         except Exception:
-            pass  # файла нет — создадим
-        files_out.append({"path": f["path"],
-                          "content": render_doc_file(existing, f)})
+            try:
+                existing = repo_obj.get_content(f["path"]).decoded_content.decode()
+            except Exception:
+                pass  # файла нет нигде — создадим
+        new_content = render_doc_file(existing, f)
+        if existing is not None and new_content == existing:
+            continue  # контент идентичен текущему состоянию цели коммита
+        files_out.append({"path": f["path"], "content": new_content})
 
-    base_sha = c.repo(slug).get_branch("main").commit.sha
-    c.create_blob_commit(slug, branch, base_sha, files_out,
+    if not files_out:
+        raise RuntimeError(
+            f"publish skipped: nothing to commit on top of {'branch ' + branch_ref_sha[:8] if branch_ref_sha else 'main'} "
+            f"in {slug} (thread={tid}). GitHub отклонил бы такой PR ошибкой "
+            "'No commits between main and <branch>'. Причины: 1) файлы docs/ из "
+            "предыдущего draft PR'а были смержены в main руками; 2) бот уже "
+            "публиковал идентичный черновик. Исправление: закройте старый PR и "
+            "удалите ветку docagent/<thread>, либо откатите docs/ из main.")
+
+    # parent коммита: если ветка уже существует (ревью-правки / повторный пуск) —
+    # поверх её HEAD (получаем непустой diff и апдейт того же PR); иначе — main.
+    parent_sha = branch_ref_sha or repo_obj.get_branch("main").commit.sha
+    c.create_blob_commit(slug, branch, parent_sha, files_out,
                          payload.get("commit_message", "docs: auto"))
     title = f"Docs: {payload.get('pr_ref', tid)}"
     body = payload.get("body_md", "")
     if payload.get("needs_human_edit"):
         body += "\n\nneeds_human_edit\n"
+    if branch_ref_sha:  # PR по этой ветке уже открыт — new pull would 422 duplicate
+        prs = list(repo_obj.get_pulls(state="all", head=f"{slug.split('/')[0]}:{branch}"))
+        if prs:
+            pr = prs[0]
+            pr.edit(title=title, body=body)
+            return {"pr_number": pr.number, "pr_url": pr.html_url,
+                    "publish_mode": "github", "updated": True}
     res = c.open_draft_pr(slug, branch, title, body)
     return {"pr_number": res["number"], "pr_url": res["html_url"],
             "publish_mode": "github"}
