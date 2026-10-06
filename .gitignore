@@ -1,11 +1,2 @@
-# Python compiled files
-__pycache__/
-*.pyc
-
-# Git bundle files
-*.bundle
-
-# runtime artifacts
-data/checkpoints.db*
-data/outbox/
-*.db
+# Patch files
+*.patch
