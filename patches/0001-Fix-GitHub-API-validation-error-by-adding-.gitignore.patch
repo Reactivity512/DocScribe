@@ -1,0 +1,29 @@
+From c36ae66b441b96a8bd50d5bb3ce971f002027abd Mon Sep 17 00:00:00 2001
+From: "qwen.ai[bot]" <qwenlm-intl@service.alibaba.com>
+Date: Tue, 6 Oct 2026 17:42:30 +0000
+Subject: [PATCH 1/4] Fix GitHub API validation error by adding .gitignore for
+ Python artifacts and bundle files - Add .gitignore to exclude __pycache__,
+ *.pyc, and *.bundle files - Prevents empty or invalid commit references
+ between main and agent-mcp-hitl-architecture branches
+
+---
+ .gitignore | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/.gitignore b/.gitignore
+index cfa61fd..4801247 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -1 +1,6 @@
+-(empty)
+\ No newline at end of file
++# Python compiled files
++__pycache__/
++*.pyc
++
++# Git bundle files
++*.bundle
+\ No newline at end of file
+-- 
+2.39.5
+
