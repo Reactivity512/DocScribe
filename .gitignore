@@ -4,3 +4,8 @@ __pycache__/
 
 # Git bundle files
 *.bundle
+
+# runtime artifacts
+data/checkpoints.db*
+data/outbox/
+*.db

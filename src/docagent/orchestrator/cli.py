@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]  # src/docagent/orchestrator/cli.py -> корень репо
@@ -49,6 +50,9 @@ def main(argv=None):
     ap.add_argument("--lang", default=None, choices=["ru", "en"])
     ap.add_argument("--auto-approve", action="store_true",
                     help="автоматически approve при interrupt (для e2e-демо/тестов)")
+    ap.add_argument("--once", action="store_true",
+                    help="не чистить thread: прогнать кейс один раз (иначе --gold "
+                         "кейсы переиспользуют thread_id и статус-чейны склеиваются)")
     ap.add_argument("--resume", action="store_true", help="продолжить существующий thread")
     ap.add_argument("--thread", help="thread_id для --resume")
     ap.add_argument("--decision", default="approve",
@@ -58,6 +62,11 @@ def main(argv=None):
 
     graph, cleanup = compile_pipeline()
     cfg = {"configurable": {"thread_id": args.thread or "run-1"}}
+
+    if not args.resume and not args.once:
+        # новый запуск того же кейса = новый тред (иначе статус-чейны накапливаются
+        # поверх старого чекпоинта pr-<id>)
+        cfg["configurable"]["thread_id"] += f"-{int(time.time())}"
 
     if args.resume:
         if not args.thread:

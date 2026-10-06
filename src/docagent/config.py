@@ -42,6 +42,14 @@ class Settings(BaseSettings):
     outbox_dir: Path = REPO_ROOT / "data" / "outbox"
     runs_log: Path = REPO_ROOT / "data" / "logs" / "runs.jsonl"
 
+    # --- github-интеграция (шаг 4) ---------------------------------------------
+    publish_target: str = "outbox"  # outbox | github
+    github_token: str = ""          # PAT с scope repo (или env GITHUB_TOKEN)
+    github_api_base: str = "https://api.github.com"
+    demo_repo: str = "Reactivity512/python-demo-repo"
+    bot_branch_prefix: str = "docagent/"
+    workdir: Path = REPO_ROOT / "data" / "work"  # shallow-клоны для гибридного diff
+
     # --- пороги pre-filter'а (§6 плана шага 0) --------------------------------
     typo_max_changed_lines: int = 6
     typo_min_new_words: int = 8
