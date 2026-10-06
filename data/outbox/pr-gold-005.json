@@ -1,0 +1,28 @@
+{
+  "payload": {
+    "pr_ref": "gold-005",
+    "branch": "docagent/auto-docs",
+    "commit_message": "docs: автообновление документации (api-reference)",
+    "body_md": "## 📝 Docs update proposal (автосген, шаг 0)\n\nPR: `gold-005` · язык: ru\n\n### Изменяемые файлы\n- `docs/api-reference.md` (update, target: api-reference)\n_Одобри этот draft PR (review → Approve) или оставь замечания — я перепишу._\n",
+    "files": [
+      {
+        "path": "docs/api-reference.md",
+        "content_md": "### Изменения: - demopkg/settings.py (get_cached): [R-api-added] def get_cached(key, ttl_seconds=300); - demopkg/settings.py (get): [R-api-added] def get_cached(key, ttl_seconds=300):",
+        "action": "update",
+        "anchor": "## Overview",
+        "target": "api-reference"
+      }
+    ]
+  },
+  "approval": {
+    "decision": "approve",
+    "feedback": "",
+    "reviewer": "auto"
+  },
+  "status_chain": [
+    "drafts_ok",
+    "published",
+    "drafts_ok"
+  ],
+  "revisions": 0
+}
