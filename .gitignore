@@ -1,3 +1,11 @@
-# Patch files
-*.patchdemo_repo/
-data/work/
+# Compiled and build artifacts
+__pycache__/
+*.pyc
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Editors
+.vscode/
+.idea/

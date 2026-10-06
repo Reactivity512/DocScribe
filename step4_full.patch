@@ -1,0 +1,986 @@
+diff --git a/.gitignore b/.gitignore
+index 4801247..2d05427 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -3,4 +3,9 @@ __pycache__/
+ *.pyc
+ 
+ # Git bundle files
+-*.bundle
+\ No newline at end of file
++*.bundle
++
++# runtime artifacts
++data/checkpoints.db*
++data/outbox/
++*.db
+diff --git a/requirements.txt b/requirements.txt
+index a540d37..7cc7303 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -5,5 +5,6 @@ openai>=1.30
+ jinja2>=3.1
+ langgraph>=0.2.60
+ langgraph-checkpoint-sqlite>=2.0.0
++PyGithub>=2.3
+ pytest>=8.0
+ pytest-asyncio>=0.23
+diff --git a/src/docagent/config.py b/src/docagent/config.py
+index 621c464..df7d131 100644
+--- a/src/docagent/config.py
++++ b/src/docagent/config.py
+@@ -42,6 +42,14 @@ class Settings(BaseSettings):
+     outbox_dir: Path = REPO_ROOT / "data" / "outbox"
+     runs_log: Path = REPO_ROOT / "data" / "logs" / "runs.jsonl"
+ 
++    # --- github-интеграция (шаг 4) ---------------------------------------------
++    publish_target: str = "outbox"  # outbox | github
++    github_token: str = ""          # PAT с scope repo (или env GITHUB_TOKEN)
++    github_api_base: str = "https://api.github.com"
++    demo_repo: str = "Reactivity512/python-demo-repo"
++    bot_branch_prefix: str = "docagent/"
++    workdir: Path = REPO_ROOT / "data" / "work"  # shallow-клоны для гибридного diff
++
+     # --- пороги pre-filter'а (§6 плана шага 0) --------------------------------
+     typo_max_changed_lines: int = 6
+     typo_min_new_words: int = 8
+diff --git a/src/docagent/github_int/__init__.py b/src/docagent/github_int/__init__.py
+new file mode 100644
+index 0000000..eb8baf5
+--- /dev/null
++++ b/src/docagent/github_int/__init__.py
+@@ -0,0 +1 @@
++"""GitHub-интеграция (Шаг 4): PAT-клиент, гибридный diff, публикация draft PR."""
+diff --git a/src/docagent/github_int/bootstrap.py b/src/docagent/github_int/bootstrap.py
+new file mode 100644
+index 0000000..432a638
+--- /dev/null
++++ b/src/docagent/github_int/bootstrap.py
+@@ -0,0 +1,201 @@
++"""Bootstrap демо-репозитория (шаг 4): наполнение Reactivity512/python-demo-repo.
++
++Создаёт на main коммит с минимальным Python-пакетом `demopkg` + README, чтобы
++было что анализировать в e2e. Идемпотентен: файлы, которые уже есть в репо,
++не перезаписывает (сверка по SHA blob'ов).
++
++Использование:
++  python -m docagent.github_int.cli bootstrap --repo owner/name [--dry-run]
++"""
++from __future__ import annotations
++
++import base64
++
++from github import GithubException
++
++from ..config import Settings
++from .client import GitHubClient
++
++# --- содержимое демо-пакета -----------------------------------------------------
++FILES: dict[str, str] = {
++    "README.md": """\
++# python-demo-repo
++
++Демо-репозиторий для DocScribe (агент автодокументации с HITL).
++
++## Установка
++
++```bash
++pip install -e .
++```
++
++## Быстрый старт
++
++```python
++from demopkg import Client
++
++client = Client(token="demo-token")
++items = client.list_items(page_size=10)
++print(items.total)
++```
++""",
++    "pyproject.toml": """\
++[build-system]
++requires = ["setuptools>=68"]
++build-backend = "setuptools.build_meta"
++
++[project]
++name = "demopkg"
++version = "0.1.0"
++description = "Demo package for DocScribe agent"
++requires-python = ">=3.10"
++dependencies = [
++    "requests>=2.31",
++]
++
++[tool.setuptools.packages.find]
++include = ["demopkg*"]
++""",
++    "demopkg/__init__.py": '''\
++"""demopkg — минимальный демо-пакет для тестов DocScribe."""
++
++from .client import Client
++from .errors import ApiError, RateLimitError
++
++__all__ = ["Client", "ApiError", "RateLimitError"]
++__version__ = "0.1.0"
++''',
++    "demopkg/client.py": '''\
++"""HTTP-клиент демо-API."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass, field
++
++import requests
++
++from .errors import ApiError, RateLimitError
++
++DEFAULT_TIMEOUT = 30
++
++
++@dataclass
++class Page:
++    """Страница результатов list_items()."""
++
++    items: list[dict] = field(default_factory=list)
++    total: int = 0
++
++
++class Client:
++    """Клиент демо-API.
++
++    :param token: API-токен (заголовок Authorization).
++    :param base_url: базовый URL API.
++    """
++
++    def __init__(self, token: str, base_url: str = "https://api.demo.dev/v1",
++                 timeout: int = DEFAULT_TIMEOUT) -> None:
++        if not token:
++            raise ValueError("token is required")
++        self._session = requests.Session()
++        self._session.headers["Authorization"] = f"Bearer {token}"
++        self.base_url = base_url.rstrip("/")
++        self.timeout = timeout
++
++    def list_items(self, page_size: int = 20, cursor: str | None = None) -> Page:
++        """Постраничный список элементов.
++
++        :param page_size: размер страницы (1..100).
++        :param cursor: курсор следующей страницы из предыдущего ответа.
++        """
++        if not 1 <= page_size <= 100:
++            raise ValueError("page_size must be in 1..100")
++        params = {"page_size": page_size}
++        if cursor:
++            params["cursor"] = cursor
++        resp = self._session.get(f"{self.base_url}/items", params=params,
++                                 timeout=self.timeout)
++        self._raise_for_status(resp)
++        data = resp.json()
++        return Page(items=data.get("items", []), total=data.get("total", 0))
++
++    def get_item(self, item_id: str) -> dict:
++        """Получить элемент по id; KeyError->ApiError при 404."""
++        resp = self._session.get(f"{self.base_url}/items/{item_id}",
++                                 timeout=self.timeout)
++        self._raise_for_status(resp)
++        return resp.json()
++
++    @staticmethod
++    def _raise_for_status(resp: requests.Response) -> None:
++        if resp.status_code == 429:
++            raise RateLimitError(retry_after=int(
++                resp.headers.get("Retry-After", "60")))
++        if resp.status_code >= 400:
++            raise ApiError(resp.status_code, resp.text[:200])
++''',
++    "demopkg/errors.py": '''\
++"""Исключения demopkg."""
++
++
++class DemopkgError(Exception):
++    """Базовое исключение пакета."""
++
++
++class ApiError(DemopkgError):
++    def __init__(self, status_code: int, message: str = "") -> None:
++        super().__init__(f"HTTP {status_code}: {message}")
++        self.status_code = status_code
++
++
++class RateLimitError(ApiError):
++    def __init__(self, retry_after: int = 60) -> None:
++        super().__init__(429, f"retry after {retry_after}s")
++        self.retry_after = retry_after
++''',
++    ".gitignore": """\
++__pycache__/
++*.pyc
++*.egg-info/
++dist/
++build/
++.env
++.venv/
++""",
++}
++
++
++def encode(content: str) -> str:
++    return base64.b64encode(content.encode()).decode()
++
++
++def plan_bootstrap(client: GitHubClient, slug: str) -> list[dict]:
++    """Файлы, которых ещё нет в репо (идемпотентный план)."""
++    repo = client.repo(slug)
++    plan = []
++    for path, content in FILES.items():
++        try:
++            repo.get_content(path)
++            continue  # уже есть — не трогаем
++        except GithubException as e:
++            if e.status != 404:
++                raise
++        plan.append({"path": path, "content": encode(content), "b64": True,
++                     "_plain": content})
++    return plan
++
++
++def run_bootstrap(client: GitHubClient, slug: str, dry_run: bool = False,
++                  branch: str = "main") -> dict:
++    plan = plan_bootstrap(client, slug)
++    if not plan:
++        return {"created": 0, "skipped": len(FILES), "commit": None}
++    if dry_run:
++        return {"created": len(plan), "skipped": len(FILES) - len(plan),
++                "paths": [p["path"] for p in plan], "commit": "DRY-RUN"}
++    head_sha = client.repo(slug).get_branch(branch).commit.sha
++    sha = client.create_blob_commit(slug, branch, head_sha, plan,
++                                    "chore: bootstrap demo package demopkg")
++    return {"created": len(plan), "skipped": len(FILES) - len(plan),
++            "paths": [p["path"] for p in plan], "commit": sha}
+diff --git a/src/docagent/github_int/cli.py b/src/docagent/github_int/cli.py
+new file mode 100644
+index 0000000..65be338
+--- /dev/null
++++ b/src/docagent/github_int/cli.py
+@@ -0,0 +1,108 @@
++"""CLI GitHub-интеграции (Шаг 4).
++
++Примеры:
++  # наполнить демо-репозиторий кодом (идемпотентно; сначала --dry-run!)
++  python -m docagent.github_int.cli bootstrap --repo Reactivity512/python-demo-repo --dry-run
++  python -m docagent.github_int.cli bootstrap --repo Reactivity512/python-demo-repo
++
++  # гибрид: diff+клон реального PR, анализ правилами шага 1 (без LLM)
++  python -m docagent.github_int.cli diff --repo owner/name --pr 7
++
++  # e2e на реальном PR: полный граф с публикацией draft PR в демо-репо
++  GITHUB_TOKEN=... DOCAGENT_PUBLISH_TARGET=github \\
++  python -m docagent.github_int.cli run --repo owner/name --pr 7 --backend ollama --auto-approve
++"""
++from __future__ import annotations
++
++import argparse
++import json
++import sys
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parents[3]
++sys.path.insert(0, str(REPO / "src"))
++
++from docagent.config import get_settings  # noqa: E402
++from docagent.github_int.bootstrap import run_bootstrap  # noqa: E402
++from docagent.github_int.client import GitHubClient  # noqa: E402
++
++
++def cmd_whoami(args):
++    c = GitHubClient()
++    print(json.dumps({"login": c.whoami(), "rate_limit":
++                      dict(c.api.get_rate_limit())}, default=str)[:400])
++    return 0
++
++
++def cmd_bootstrap(args):
++    c = GitHubClient()
++    res = run_bootstrap(c, args.repo, dry_run=args.dry_run)
++    print(json.dumps(res, ensure_ascii=False, indent=2))
++    return 0
++
++
++def cmd_diff(args):
++    """Гибридный read-side: REST-diff + shallow-клон head-рефа."""
++    c = GitHubClient()
++    diff = c.diff_text(args.repo, args.pr)
++    files = c.changed_files(args.repo, args.pr)
++    out = {"pr": f"{args.repo}#{args.pr}", "diff_chars": len(diff),
++           "files": [f["filename"] for f in files]}
++    if not args.no_clone:
++        out["clone_path"] = str(c.clone_head(args.repo, args.pr))
++    from docagent.mcp_server.service import decide_on_diff
++    decision = decide_on_diff(diff, get_settings())
++    out["behavior"] = decision.behavior.value
++    out["targets"] = [t.value for t in decision.expected_docs_targets]
++    print(json.dumps(out, ensure_ascii=False, indent=2))
++    return 0
++
++
++def cmd_run(args):
++    """Полный цикл графа на реальном PR (публикация — по DOCAGENT_PUBLISH_TARGET)."""
++    c = GitHubClient()
++    diff = c.diff_text(args.repo, args.pr)
++    from docagent.orchestrator.cli import main as orch_main
++    tmp = REPO / "data" / "work" / f"{args.repo.replace('/', '_')}-pr{args.pr}.diff"
++    tmp.parent.mkdir(parents=True, exist_ok=True)
++    tmp.write_text(diff, encoding="utf-8")
++    # pr_ref обязателен для github-publish: без него _repo_slug падает на
++    # demo_repo и ветка сливается с main -> "No commits between main and ..."
++    argv = ["--diff", str(tmp), "--backend", args.backend,
++            "--pr-ref", f"https://github.com/{args.repo}/pull/{args.pr}"]
++    if args.auto_approve:
++        argv.append("--auto-approve")
++    return orch_main(argv)
++
++
++def main(argv=None):
++    ap = argparse.ArgumentParser(description="DocAgent GitHub integration (step 4)")
++    sub = ap.add_subparsers(dest="cmd", required=True)
++
++    p = sub.add_parser("bootstrap", help="наполнить демо-репо пакетом demopkg")
++    p.add_argument("--repo", required=True)
++    p.add_argument("--dry-run", action="store_true")
++    p.set_defaults(fn=cmd_bootstrap)
++
++    p = sub.add_parser("diff", help="гибридный read: diff+клон+анализ правил")
++    p.add_argument("--repo", required=True)
++    p.add_argument("--pr", type=int, required=True)
++    p.add_argument("--no-clone", action="store_true")
++    p.set_defaults(fn=cmd_diff)
++
++    p = sub.add_parser("run", help="полный цикл графа на реальном PR")
++    p.add_argument("--repo", required=True)
++    p.add_argument("--pr", type=int, required=True)
++    p.add_argument("--backend", default="fake", choices=["fake", "ollama", "vllm"])
++    p.add_argument("--auto-approve", action="store_true")
++    p.set_defaults(fn=cmd_run)
++
++    p = sub.add_parser("whoami", help="проверка токена")
++    p.set_defaults(fn=cmd_whoami)
++
++    args = ap.parse_args(argv)
++    return args.fn(args)
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/src/docagent/github_int/client.py b/src/docagent/github_int/client.py
+new file mode 100644
+index 0000000..2ab9685
+--- /dev/null
++++ b/src/docagent/github_int/client.py
+@@ -0,0 +1,115 @@
++"""Клиент GitHub (шаг 4): PAT-auth через PyGithub + гибрид для чтения кода.
++
++Гибридный diff:
++  1. meta/diff берём из REST (pull_request.get_files()) — быстро, без клона;
++  2. если нужен полный контекст файлов (чтение кода агентом) — shallow-клон
++     head-рефа в data/work/<repo>-pr<n> (git depth=1).
++
++Токен: DOCAGENT_GITHUB_TOKEN или GITHUB_TOKEN (env). Никогда не хардкодится.
++"""
++from __future__ import annotations
++
++import os
++import subprocess
++from pathlib import Path
++
++from github import Github, GithubException
++from github.Requester import Requester  # noqa: F401  (типизация)
++
++from ..config import Settings, get_settings
++
++
++class GitHubClient:
++    def __init__(self, token: str | None = None, settings: Settings | None = None):
++        self.s = settings or get_settings()
++        tok = token or self.s.github_token or os.environ.get("GITHUB_TOKEN", "")
++        if not tok:
++            raise RuntimeError(
++                "GitHub token не задан: экспортируй GITHUB_TOKEN=... "
++                "или DOCAGENT_GITHUB_TOKEN=...")
++        base = self.s.github_api_base.rstrip("/")
++        self.api = Github(tok, base_url=base) if base != "https://api.github.com" \
++            else Github(tok)
++        self.token = tok
++
++    # ------------------------------------------------------------- read side
++    def repo(self, slug: str):
++        return self.api.get_repo(slug)
++
++    def pr(self, slug: str, number: int):
++        return self.repo(slug).get_pull(number)
++
++    def diff_text(self, slug: str, number: int) -> str:
++        """Unified diff PR'а одним HTTP-запросом (Accept: vnd.github.diff)."""
++        requester = self.api._Github__requester  # type: ignore[attr-defined]
++        _, owner, name = slug.partition("/")
++        url = f"/repos/{owner}/{name}/pulls/{number}"
++        status, rdata, _ = requester.requestJson(
++            "GET", url, headers={"Accept": "application/vnd.github.diff"})
++        if status != 200:
++            raise GithubException(status, rdata, None)
++        return rdata.decode("utf-8", errors="replace")
++
++    def changed_files(self, slug: str, number: int) -> list[dict]:
++        """Файлы PR (patch может отсутствовать для бинарников)."""
++        pr = self.pr(slug, number)
++        return [{"filename": f.filename, "status": f.status,
++                 "additions": f.additions, "deletions": f.deletions,
++                 "patch": getattr(f, "patch", None)} for f in pr.get_files()]
++
++    def clone_head(self, slug: str, number: int) -> Path:
++        """Shallow-клон head-рефа PR (для чтения полного контекста файлов)."""
++        pr = self.pr(slug, number)
++        dest = Path(self.s.workdir) / f"{slug.replace('/', '_')}-pr{number}"
++        if dest.exists():
++            subprocess.run(["git", "-C", str(dest), "fetch", "--depth", "1",
++                            "origin", pr.head.sha], check=True,
++                           capture_output=True)
++            subprocess.run(["git", "-C", str(dest), "checkout", "--detach",
++                            pr.head.sha], check=True, capture_output=True)
++            return dest
++        dest.parent.mkdir(parents=True, exist_ok=True)
++        url = f"https://x-access-token:{self.token}@github.com/{slug}.git"
++        subprocess.run(["git", "clone", "--depth", "1", url, str(dest)],
++                       check=True, capture_output=True)
++        subprocess.run(["git", "-C", str(dest), "fetch", "--depth", "1",
++                        "origin", pr.head.sha], check=True, capture_output=True)
++        subprocess.run(["git", "-C", str(dest), "checkout", "--detach",
++                        pr.head.sha], check=True, capture_output=True)
++        # токен вычищаем из remote, чтобы не остался в .git/config
++        subprocess.run(["git", "-C", str(dest), "remote", "set-url",
++                        "origin", f"https://github.com/{slug}.git"],
++                       check=True, capture_output=True)
++        return dest
++
++    # ------------------------------------------------------------ write side
++    def create_blob_commit(self, slug: str, branch: str, base_ref: str,
++                           files: list[dict], message: str) -> str:
++        """Создаёт коммит с файлами на ветке (без локального клона). Возвращает sha."""
++        repo = self.repo(slug)
++        ref = repo.get_git_ref(f"heads/{branch}")
++        try:
++            ref.edit(repo.get_git_commit(base_ref).sha, force=True)
++        except GithubException:
++            pass  # ветка уже указывает куда надо
++        tree_items = []
++        for f in files:
++            blob = repo.create_git_blob(f["content"], "base64" if f.get("b64")
++                                        else "utf-8")
++            tree_items.append({"path": f["path"], "mode": "100644",
++                               "type": "blob", "sha": blob.sha})
++        base_commit = repo.get_git_commit(base_ref)
++        tree = repo.create_git_tree(tree_items, base_commit.tree)
++        commit = repo.create_git_commit(message, tree, [base_commit])
++        ref.edit(commit.sha, force=True)
++        return commit.sha
++
++    def open_draft_pr(self, slug: str, branch: str, title: str, body: str,
++                      base: str = "main") -> dict:
++        repo = self.repo(slug)
++        pr = repo.create_pull(title=title, body=body, head=branch, base=base,
++                              draft=True)
++        return {"number": pr.number, "html_url": pr.html_url}
++
++    def whoami(self) -> str:
++        return self.api.get_user().login
+diff --git a/src/docagent/github_int/publisher.py b/src/docagent/github_int/publisher.py
+new file mode 100644
+index 0000000..666460e
+--- /dev/null
++++ b/src/docagent/github_int/publisher.py
+@@ -0,0 +1,136 @@
++"""Публикация payload оркестратора как draft PR (шаг 4).
++
++Вызывается из ноды publish при DOCAGENT_PUBLISH_TARGET=github.
++Контракт: state["payload"] = {branch, commit_message, body_md, files:[{path, content_md, ...}]}
++Идемпотентность: повторный запуск того же thread обновляет существующий PR
++(заголовок ветки docagent/<thread>), не создаёт дублей.
++"""
++from __future__ import annotations
++
++import re
++
++from ..config import Settings
++from .client import GitHubClient
++
++
++def _repo_slug(payload: dict, s: Settings) -> str:
++    pr_ref = payload.get("pr_ref", "")
++    m = re.search(r"github\.com/([\w.-]+/[\w.-]+)", pr_ref)
++    if m:
++        return m.group(1)
++    # "owner/name#7" или "owner/name/pulls/7" — но не локальный путь к .diff
++    if not pr_ref.endswith(".diff") and "/" in pr_ref:
++        return pr_ref.split("/pulls")[0].split("#")[0]
++    return s.demo_repo
++
++
++def render_doc_file(existing: str | None, file: dict) -> str:
++    """Вставляет/заменяет черновик в целевом md-файле по anchor.
++
++    MVP-стратегия: append под якорным заголовком; если файла нет — создаём
++    скелет с front-matter 'generated by DocAgent'.
++    """
++    content = file["content_md"].strip() + "\n"
++    heading = f"## DocAgent · {file['target']}"
++    block = f"{heading}\n\n{content}"
++    if not existing:
++        return (f"# {file['target'].replace('-', ' ').title()}\n\n"
++                "_Сгенерировано DocAgent (черновик, до одобрения team lead)._ \n\n"
++                + block + "\n")
++    # замена предыдущего блока этого target, иначе append
++    pat = re.compile(re.escape(heading) + r"\b.*?(?=\n## |\Z)", re.S)
++    if pat.search(existing):
++        return pat.sub(block, existing)
++    return existing.rstrip() + "\n\n" + block + "\n"
++
++
++def publish_to_github(state: dict, s: Settings, client: GitHubClient | None = None) -> dict:
++    """Создаёт/обновляет draft PR. Возвращает delta для OrchState."""
++    c = client or GitHubClient(settings=s)
++    payload = state.get("payload", {})
++    slug = _repo_slug(payload, s)
++    tid = re.sub(r"[^A-Za-z0-9_.-]", "_", state.get("thread_id", "run"))
++    branch = f"{s.bot_branch_prefix}{tid}"
++
++    repo_obj = c.repo(slug)
++    branch_ref_sha = None
++    try:  # существующая ветка этого же треда => ОБНОВЛЕНИЕ PR, а не новый PR
++        branch_ref_sha = repo_obj.get_git_ref(f"heads/{branch}").object.sha
++    except Exception:
++        pass
++
++    files_out = []
++    for f in payload.get("files", []):
++        existing = None
++        # при апдейте сравниваем с версией на НАШЕЙ ветке (её уже мержили в
++        # main? нет; но предыдущий пуш именно туда), иначе — с base
++        cmp_ref = {"ref": branch_ref_sha} if branch_ref_sha else {}
++        try:
++            existing = repo_obj.get_content(f["path"], **cmp_ref).decoded_content.decode()
++        except Exception:
++            try:
++                existing = repo_obj.get_content(f["path"]).decoded_content.decode()
++            except Exception:
++                pass  # файла нет нигде — создадим
++        new_content = render_doc_file(existing, f)
++        if existing is not None and new_content == existing:
++            continue  # контент идентичен текущему состоянию цели коммита
++        files_out.append({"path": f["path"], "content": new_content})
++
++    if not files_out:
++        raise RuntimeError(
++            f"publish skipped: nothing to commit on top of {'branch ' + branch_ref_sha[:8] if branch_ref_sha else 'main'} "
++            f"in {slug} (thread={tid}). GitHub отклонил бы такой PR ошибкой "
++            "'No commits between main and <branch>'. Причины: 1) файлы docs/ из "
++            "предыдущего draft PR'а были смержены в main руками; 2) бот уже "
++            "публиковал идентичный черновик. Исправление: закройте старый PR и "
++            "удалите ветку docagent/<thread>, либо откатите docs/ из main.")
++
++    # parent коммита: если ветка уже существует (ревью-правки / повторный пуск) —
++    # поверх её HEAD (получаем непустой diff и апдейт того же PR); иначе — main.
++    parent_sha = branch_ref_sha or repo_obj.get_branch("main").commit.sha
++    c.create_blob_commit(slug, branch, parent_sha, files_out,
++                         payload.get("commit_message", "docs: auto"))
++    title = f"Docs: {payload.get('pr_ref', tid)}"
++    body = payload.get("body_md", "")
++    if payload.get("needs_human_edit"):
++        body += "\n\nneeds_human_edit\n"
++
++    def _update_existing() -> dict | None:
++        """Ветка живёт => draft PR по ней почти наверняка уже открыт (наш).
++        GitHub не даёт два PR на одну пару head/base (422 'A pull request
++        already exists for ...'), поэтому сначала апдейт, только если PR нет —
++        создаём новый."""
++        try:
++            prs = list(repo_obj.get_pulls(state="open",
++                                          head=f"{slug.split('/')[0]}:{branch}"))
++        except Exception:
++            prs = []
++        if not prs:
++            return None
++        pr = prs[0]
++        try:
++            pr.edit(title=title, body=body)
++        except Exception:
++            pass  # тело/заголовок вторичны, коммит уже запушен
++        return {"pr_number": pr.number, "pr_url": pr.html_url,
++                "publish_mode": "github", "updated": True}
++
++    if branch_ref_sha:
++        upd = _update_existing()
++        if upd:
++            return upd
++
++    try:
++        res = c.open_draft_pr(slug, branch, title, body)
++    except Exception as e:
++        # гонка/легаси-PR в closed: пробуем ещё раз найти и обновить
++        upd = _update_existing()
++        if upd:
++            return upd
++        raise RuntimeError(
++            f"open_draft_pr failed for {slug} ({branch} -> main): {e}. "
++            "Если это 'pull request already exists' — закрой старый PR или "
++            "удали ветку docagent/<thread> и повтори.") from e
++    return {"pr_number": res["number"], "pr_url": res["html_url"],
++            "publish_mode": "github"}
+diff --git a/src/docagent/orchestrator/cli.py b/src/docagent/orchestrator/cli.py
+index ecf1e50..1e24c86 100644
+--- a/src/docagent/orchestrator/cli.py
++++ b/src/docagent/orchestrator/cli.py
+@@ -15,6 +15,7 @@ from __future__ import annotations
+ import argparse
+ import json
+ import sys
++import time
+ from pathlib import Path
+ 
+ REPO = Path(__file__).resolve().parents[3]  # src/docagent/orchestrator/cli.py -> корень репо
+@@ -49,8 +50,16 @@ def main(argv=None):
+     ap.add_argument("--lang", default=None, choices=["ru", "en"])
+     ap.add_argument("--auto-approve", action="store_true",
+                     help="автоматически approve при interrupt (для e2e-демо/тестов)")
++    ap.add_argument("--once", action="store_true",
++                    help="не чистить thread: прогнать кейс один раз (иначе --gold "
++                         "кейсы переиспользуют thread_id и статус-чейны склеиваются)")
+     ap.add_argument("--resume", action="store_true", help="продолжить существующий thread")
+     ap.add_argument("--thread", help="thread_id для --resume")
++    ap.add_argument("--pr-ref", default="",
++                    help="ссылка на реальный PR (url или owner/repo#N) — нужна ноде "
++                         "publish при DOCAGENT_PUBLISH_TARGET=github; без неё публикация "
++                         "ушла бы в base-репозиторий и GitHub вернул бы "
++                         "'No commits between main and <branch>'")
+     ap.add_argument("--decision", default="approve",
+                     choices=["approve", "reject", "changes"])
+     ap.add_argument("--feedback", default="")
+@@ -59,6 +68,11 @@ def main(argv=None):
+     graph, cleanup = compile_pipeline()
+     cfg = {"configurable": {"thread_id": args.thread or "run-1"}}
+ 
++    if not args.resume and not args.once:
++        # новый запуск того же кейса = новый тред (иначе статус-чейны накапливаются
++        # поверх старого чекпоинта pr-<id>)
++        cfg["configurable"]["thread_id"] += f"-{int(time.time())}"
++
+     if args.resume:
+         if not args.thread:
+             ap.error("--resume требует --thread")
+@@ -71,7 +85,7 @@ def main(argv=None):
+         diff = _load_gold_diff(args.gold) if args.gold else \
+             Path(args.diff).read_text(encoding="utf-8")
+         state_in = {
+-            "pr_ref": args.gold or args.diff,
++            "pr_ref": args.pr_ref or args.gold or args.diff,
+             "diff_text": diff,
+             "backend_name": args.backend,
+             "lang": args.lang or "",
+diff --git a/src/docagent/orchestrator/nodes.py b/src/docagent/orchestrator/nodes.py
+index f8f250c..5c3fd7c 100644
+--- a/src/docagent/orchestrator/nodes.py
++++ b/src/docagent/orchestrator/nodes.py
+@@ -236,13 +236,26 @@ def escalate_manual(state: OrchState) -> dict:
+ 
+ # --------------------------------------------------------------------------
+ def publish(state: OrchState) -> dict:
+-    """Единственная side-effect нода. Шаг 3: запись payload в outbox (JSON).
+-    Шаг 4: здесь появится создание ветки/коммита/draft PR через GitHub API."""
++    """Единственная side-effect нода.
++
++    Режимы (env DOCAGENT_PUBLISH_TARGET):
++      outbox  — шаг 3: запись payload в data/outbox/<thread>.json (дефолт, для тестов);
++      github  — шаг 4: создание ветки/коммита/draft PR через GitHub API.
++    Контракт payload не меняется между режимами.
++    """
+     t0 = time.monotonic()
+     s = get_settings()
++    tid = re.sub(r"[^A-Za-z0-9_.-]", "_", state.get("thread_id", "run"))
++
++    if getattr(s, "publish_target", "outbox") == "github":
++        from ..github_int.publisher import publish_to_github
++        result = publish_to_github(state, s)
++        return {**result, "status": ["published"],
++                "events": [_ev("publish", t0, **{k: v for k, v in result.items()
++                                                 if k != "status"})]}
++
+     outbox = Path(s.outbox_dir)
+     outbox.mkdir(parents=True, exist_ok=True)
+-    tid = re.sub(r"[^A-Za-z0-9_.-]", "_", state.get("thread_id", "run"))
+     path = outbox / f"{tid}.json"
+     record = {
+         "payload": state.get("payload", {}),
+diff --git a/tests/github_int/__init__.py b/tests/github_int/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/tests/github_int/test_github_int.py b/tests/github_int/test_github_int.py
+new file mode 100644
+index 0000000..00a7879
+--- /dev/null
++++ b/tests/github_int/test_github_int.py
+@@ -0,0 +1,256 @@
++"""Unit-тесты github_int (шаг 4) без сети: fake-клиент + чистые функции."""
++from __future__ import annotations
++
++import sys
++from pathlib import Path
++
++REPO = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(REPO / "src"))
++
++import pytest  # noqa: E402
++
++from docagent.github_int.bootstrap import FILES, encode, plan_bootstrap  # noqa: E402
++from docagent.github_int.publisher import _repo_slug, render_doc_file  # noqa: E402
++
++
++# ---------------------------------------------------------------- slug parsing
++@pytest.mark.parametrize("pr_ref,expected", [
++    ("https://github.com/foo/bar/pull/7", "foo/bar"),
++    ("foo/bar#7", "foo/bar"),
++    ("gold-005", "Reactivity512/python-demo-repo"),
++    ("/tmp/x/y.diff", "Reactivity512/python-demo-repo"),
++])
++def test_repo_slug(pr_ref, expected):
++    class S:
++        demo_repo = "Reactivity512/python-demo-repo"
++    assert _repo_slug({"pr_ref": pr_ref}, S()) == expected
++
++
++# ---------------------------------------------------------------- render
++def test_render_creates_skeleton():
++    out = render_doc_file(None, {"path": "docs/api.md", "target": "api-reference",
++                                 "content_md": "### Client.list_items\nbody"})
++    assert out.startswith("# Api Reference")
++    assert "DocAgent · api-reference" in out
++    assert "Client.list_items" in out
++
++
++def test_render_replaces_previous_block_not_others():
++    existing = ("# API\n\n## Intro\n\nkeep me\n\n"
++                "## DocAgent · api-reference\n\nOLD TEXT\n")
++    out = render_doc_file(existing, {"path": "docs/api.md",
++                                     "target": "api-reference",
++                                     "content_md": "NEW TEXT"})
++    assert "OLD TEXT" not in out
++    assert "NEW TEXT" in out
++    assert "keep me" in out  # чужие секции не трогаем
++
++
++def test_render_appends_when_no_block():
++    existing = "# API\n\n## Intro\n\nhello\n"
++    out = render_doc_file(existing, {"path": "docs/api.md",
++                                     "target": "readme", "content_md": "added"})
++    assert out.startswith("# API")
++    assert "## DocAgent · readme" in out and "added" in out
++
++
++# ---------------------------------------------------------------- bootstrap plan
++class FakeContentErr(Exception):
++    def __init__(self, status): self.status = status
++
++
++class FakeRepo:
++    """README уже есть в репо, остального нет."""
++    def get_content(self, path):
++        from github import GithubException
++        if path == "README.md":
++            return object()
++        raise GithubException(404, {}, None)
++
++
++class FakeClient:
++    def repo(self, slug): return FakeRepo()
++
++
++def test_bootstrap_plan_skips_existing():
++    plan = plan_bootstrap(FakeClient(), "foo/bar")
++    paths = {p["path"] for p in plan}
++    assert "README.md" not in paths          # не перезаписываем существующее
++    assert "demopkg/client.py" in paths
++    assert len(plan) == len(FILES) - 1
++    # контент обязан быть base64 для Git Data API
++    import base64
++    for p in plan:
++        assert base64.b64decode(p["content"]).decode() == FILES[p["path"]]
++
++
++def test_bootstrap_missing_files_roundtrip():
++    assert encode(FILES["pyproject.toml"]) != FILES["pyproject.toml"]
++
++
++# ---------------------------------------------------------------- publish via fake client
++class FakePR:
++    number = 42
++    html_url = "https://github.com/foo/bar/pull/42"
++
++
++class FakePublishRepo:
++    def __init__(self):
++        self.branch_sha = "deadbeef"
++        self.created_branches = []
++        self.prs = []
++
++    def get_content(self, path, ref=None):
++        from github import GithubException
++        raise GithubException(404, {}, None)
++
++    def get_branch(self, name):
++        class B: commit = type("C", (), {"sha": self.branch_sha})()
++        return B()
++
++    def get_git_ref(self, ref):
++        from github import GithubException
++        raise GithubException(404, {}, None)  # ветки нет — первый publish
++
++    def get_pulls(self, state="open", head=None):
++        return []
++
++    def get_git_commit(self, sha):
++        class T: pass
++        class C:
++            tree = T()
++            sha = sha
++        return C()
++
++    def create_git_blob(self, content, encoding):
++        class Blob: sha = "blobsha"
++        return Blob()
++
++    def create_git_tree(self, items, base_tree):
++        class Tree: pass
++        return Tree()
++
++    def create_git_commit(self, message, tree, parents):
++        class Commit: sha = "newcommit"
++        return Commit()
++
++    def create_pull(self, **kw):
++        self.prs.append(kw)
++        return FakePR()
++
++
++class FakePublishClient:
++    def __init__(self): self.repo_obj = FakePublishRepo()
++    def repo(self, slug): return self.repo_obj
++    def create_blob_commit(self, slug, branch, base_ref, files, message):
++        return "newcommit"
++    def open_draft_pr(self, slug, branch, title, body, base="main"):
++        self.repo_obj.prs.append({"title": title, "body": body, "head": branch,
++                                  "base": base, "draft": True})
++        return {"number": 42, "html_url": "https://github.com/foo/bar/pull/42"}
++
++
++def test_publish_to_github_flow(monkeypatch):
++    from docagent.config import Settings
++    from docagent.github_int import publisher
++
++    s = Settings(publish_target="github")
++    state = {
++        "thread_id": "pr-demo-1",
++        "payload": {
++            "pr_ref": "https://github.com/foo/bar/pull/1",
++            "commit_message": "docs: auto",
++            "body_md": "## body",
++            "files": [{"path": "docs/api-reference.md", "target": "api-reference",
++                       "content_md": "text about Client", "action": "append"}],
++        },
++    }
++    fc = FakePublishClient()
++    res = publisher.publish_to_github(state, s, client=fc)
++    assert res == {"pr_number": 42,
++                   "pr_url": "https://github.com/foo/bar/pull/42",
++                   "publish_mode": "github"}
++    kw = fc.repo_obj.prs[0]
++    assert kw["draft"] is True                      # только draft PR
++    assert kw["head"] == "docagent/pr-demo-1"        # идемпотентная ветка по thread
++    assert "Docs:" in kw["title"]
++
++
++def test_publish_empty_diff_raises(monkeypatch):
++    """Регрессия на 'No commits between main and <branch>': если контент
++    черновика уже в файле — publish обязан упасть с внятной ошибкой, а не
++    создавать пустой PR."""
++    from docagent.config import Settings
++    from docagent.github_int import publisher
++
++    class ExistingContentRepo(FakePublishRepo):
++        """main уже содержит точно такой же блок -> files_out пуст."""
++        def get_content(self, path, ref=None):
++            existing_main = (
++                "# Api Reference\n\n"
++                "_Сгенерировано DocAgent (черновик, до одобрения team lead)._ \n\n"
++                "## DocAgent · api-reference\n\ntext about Client\n")
++            return type("R", (), {"decoded_content": existing_main.encode()})()
++
++    class C:
++        def repo(self, slug): return ExistingContentRepo()
++        def create_blob_commit(self, *a, **k): raise AssertionError("must not commit")
++        # ветки нет (FakePublishRepo.get_git_ref -> 404), контент совпадает с main
++        def open_draft_pr(self, *a, **k): raise AssertionError("must not open PR")
++
++    s = Settings(publish_target="github")
++    state = {
++        "thread_id": "pr-demo-1",
++        "payload": {
++            "pr_ref": "https://github.com/foo/bar/pull/1",
++            "files": [{"path": "docs/api-reference.md", "target": "api-reference",
++                       "content_md": "text about Client", "action": "append"}],
++        },
++    }
++    import pytest
++    with pytest.raises(RuntimeError, match="nothing to commit"):
++        publisher.publish_to_github(state, s, client=C())
++
++
++def test_publish_updates_existing_branch_pr():
++    """Регрессия на 'No commits between main and <branch>' при ревью-правках:
++    если ветка треда уже существует — коммит поверх её HEAD (не поверх main),
++    PR обновляется, дубль не создаётся."""
++    from docagent.config import Settings
++    from docagent.github_int import publisher
++
++    class BranchExistsRepo(FakePublishRepo):
++        def get_git_ref(self, ref):
++            o = type("O", (), {"sha": "branchhead123"})()
++            return type("R", (), {"object": o})()
++        def get_pulls(self, state="open", head=None):
++            pr = type("P", (), {"number": 42, "html_url": "https://github.com/foo/bar/pull/42",
++                                "edit": lambda self, **kw: None})()
++            self.edited = kw if False else None
++            return [pr]
++
++    captured = {}
++    class C(FakePublishClient):
++        def __init__(self):
++            self.repo_obj = BranchExistsRepo()
++        def create_blob_commit(self, slug, branch, base_ref, files, message):
++            captured["parent"] = base_ref
++            captured["files"] = files
++            return "newcommit"
++        def open_draft_pr(self, *a, **k):
++            raise AssertionError("must not open duplicate PR")
++
++    s = Settings(publish_target="github")
++    state = {
++        "thread_id": "pr-demo-1",
++        "payload": {
++            "pr_ref": "https://github.com/foo/bar/pull/1",
++            "commit_message": "docs: v2 after review",
++            "body_md": "## body v2",
++            "files": [{"path": "docs/api-reference.md", "target": "api-reference",
++                       "content_md": "UPDATED text about Client", "action": "append"}],
++        },
++    }
++    res = publisher.publish_to_github(state, s, client=C())
++    assert captured["parent"] == "branchhead123"   # parent = HEAD ветки, не main
++    assert res["updated"] is True and res["pr_number"] == 42
