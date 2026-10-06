@@ -95,13 +95,42 @@ def publish_to_github(state: dict, s: Settings, client: GitHubClient | None = No
     body = payload.get("body_md", "")
     if payload.get("needs_human_edit"):
         body += "\n\nneeds_human_edit\n"
-    if branch_ref_sha:  # PR по этой ветке уже открыт — new pull would 422 duplicate
-        prs = list(repo_obj.get_pulls(state="all", head=f"{slug.split('/')[0]}:{branch}"))
-        if prs:
-            pr = prs[0]
+
+    def _update_existing() -> dict | None:
+        """Ветка живёт => draft PR по ней почти наверняка уже открыт (наш).
+        GitHub не даёт два PR на одну пару head/base (422 'A pull request
+        already exists for ...'), поэтому сначала апдейт, только если PR нет —
+        создаём новый."""
+        try:
+            prs = list(repo_obj.get_pulls(state="open",
+                                          head=f"{slug.split('/')[0]}:{branch}"))
+        except Exception:
+            prs = []
+        if not prs:
+            return None
+        pr = prs[0]
+        try:
             pr.edit(title=title, body=body)
-            return {"pr_number": pr.number, "pr_url": pr.html_url,
-                    "publish_mode": "github", "updated": True}
-    res = c.open_draft_pr(slug, branch, title, body)
+        except Exception:
+            pass  # тело/заголовок вторичны, коммит уже запушен
+        return {"pr_number": pr.number, "pr_url": pr.html_url,
+                "publish_mode": "github", "updated": True}
+
+    if branch_ref_sha:
+        upd = _update_existing()
+        if upd:
+            return upd
+
+    try:
+        res = c.open_draft_pr(slug, branch, title, body)
+    except Exception as e:
+        # гонка/легаси-PR в closed: пробуем ещё раз найти и обновить
+        upd = _update_existing()
+        if upd:
+            return upd
+        raise RuntimeError(
+            f"open_draft_pr failed for {slug} ({branch} -> main): {e}. "
+            "Если это 'pull request already exists' — закрой старый PR или "
+            "удали ветку docagent/<thread> и повтори.") from e
     return {"pr_number": res["number"], "pr_url": res["html_url"],
             "publish_mode": "github"}
