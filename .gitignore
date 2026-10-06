@@ -1,2 +1,3 @@
 # Patch files
-*.patch
+*.patchdemo_repo/
+data/work/

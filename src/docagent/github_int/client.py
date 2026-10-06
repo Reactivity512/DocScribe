@@ -83,15 +83,39 @@ class GitHubClient:
         return dest
 
     # ------------------------------------------------------------ write side
+    def ensure_branch_at(self, slug: str, branch: str, sha: str) -> None:
+        """Создаёт ветку branch на sha или сбрасывает её на него (force).
+
+        Гарантирует: base и head не равны => GitHub не выдаст
+        'No commits between main and <branch>'.
+        """
+        repo = self.repo(slug)
+        try:
+            ref = repo.get_git_ref(f"heads/{branch}")
+            if ref.object.sha != sha:
+                ref.edit(sha, force=True)
+        except GithubException as e:
+            if e.status != 404:
+                raise
+            repo.create_git_ref(f"refs/heads/{branch}", sha)
+
     def create_blob_commit(self, slug: str, branch: str, base_ref: str,
                            files: list[dict], message: str) -> str:
-        """Создаёт коммит с файлами на ветке (без локального клона). Возвращает sha."""
+        """Создаёт коммит с файлами на ветке (без локального клона). Возвращает sha.
+
+        Если ветка уже существует — коммит кладётся поверх её HEAD (иначе
+        перезаписанный docs-файл дал бы дерево, идентичное базе, и GitHub
+        отклонил бы PR 'No commits between main and <branch>').
+        Ветка создаётся только ПОСЛЕ успешного коммита — при пустом diff в репо
+        не остаётся мусорной ветки, идентичной main.
+        """
         repo = self.repo(slug)
-        ref = repo.get_git_ref(f"heads/{branch}")
-        try:
-            ref.edit(repo.get_git_commit(base_ref).sha, force=True)
+        try:  # существующая ветка => пишем поверх неё (апдейт PR), иначе на базу
+            cur = repo.get_git_ref(f"heads/{branch}").object.sha
+            if repo.get_git_commit(cur).parents:  # это наш commit-branch, не main-sha
+                base_ref = cur
         except GithubException:
-            pass  # ветка уже указывает куда надо
+            pass  # ветки нет — используем base_ref как есть
         tree_items = []
         for f in files:
             blob = repo.create_git_blob(f["content"], "base64" if f.get("b64")
@@ -99,9 +123,16 @@ class GitHubClient:
             tree_items.append({"path": f["path"], "mode": "100644",
                                "type": "blob", "sha": blob.sha})
         base_commit = repo.get_git_commit(base_ref)
-        tree = repo.create_git_tree(tree_items, base_commit.tree)
+        try:
+            tree = repo.create_git_tree(tree_items, base_commit.tree)
+        except GithubException as e:
+            raise RuntimeError(
+                f"create_blob_commit {slug}: дерево идентично базе "
+                f"{base_ref[:8]} (GitHub вернул {e.status}). PR с таким diff'ом "
+                "невозможно — 'No commits between main and <branch>'.") from e
         commit = repo.create_git_commit(message, tree, [base_commit])
-        ref.edit(commit.sha, force=True)
+        # ветка создаётся/сбрасывается ТОЛЬКО после успешного коммита
+        self.ensure_branch_at(slug, branch, commit.sha)
         return commit.sha
 
     def open_draft_pr(self, slug: str, branch: str, title: str, body: str,

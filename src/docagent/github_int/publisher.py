@@ -19,7 +19,9 @@ def _repo_slug(payload: dict, s: Settings) -> str:
     if m:
         return m.group(1)
     # "owner/name#7" или "owner/name/pulls/7" — но не локальный путь к .diff
-    if not pr_ref.endswith(".diff") and "/" in pr_ref:
+    if not pr_ref.endswith(".diff") and "/" in pr_ref \
+            and not pr_ref.startswith(("/", "\\")) \
+            and ":" not in pr_ref.split("/")[0]:  # "F:\\..." это путь, не slug
         return pr_ref.split("/pulls")[0].split("#")[0]
     return s.demo_repo
 

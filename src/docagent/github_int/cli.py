@@ -36,8 +36,71 @@ def cmd_whoami(args):
 
 def cmd_bootstrap(args):
     c = GitHubClient()
+    # bootstrap пишет напрямую в main демо-репо (git tree API, без PR) —
+    # так мы не смешиваем историю DocScribe и python-demo-repo.
     res = run_bootstrap(c, args.repo, dry_run=args.dry_run)
     print(json.dumps(res, ensure_ascii=False, indent=2))
+    return 0
+
+
+def cmd_seed_pr(args):
+    """Создать тестовый PR в демо-репо из gold-кейса (ветка строго от main демо-репо).
+
+    Берёт code_change.diff кейса, применяет его к локальному клону demo_repo/
+    (git apply) и пушит ветку test/<case> — без смешения с историей DocScribe.
+    """
+    import re as _re
+    import subprocess
+
+    c = GitHubClient()
+    slug = args.repo
+    case_file = REPO / "data" / "gold" / "cases" / f"{args.case}.json"
+    if not case_file.exists():
+        print(f"case not found: {case_file}", file=sys.stderr)
+        return 2
+    case = json.loads(case_file.read_text(encoding="utf-8"))
+    diff = (case.get("code_change") or {}).get("diff", "")
+    if not diff.strip():
+        print(f"{args.case}: пустой code_change.diff (negative-кейс?)", file=sys.stderr)
+        return 2
+
+    wd = REPO / "demo_repo"  # локальный клон ЦЕЛЕВОГО демо-репо (пункт 1 ритуала)
+    token_url = f"https://x-access-token:{c.token}@github.com/{slug}.git"
+    if not (wd / ".git").exists():
+        subprocess.run(["git", "clone", token_url, str(wd)], check=True,
+                       capture_output=True)
+    branch = f"test/{args.case}"
+    for cmd in (["git", "-C", str(wd), "fetch", "origin", "main"],
+                ["git", "-C", str(wd), "checkout", "-B", branch, "origin/main"],
+                ["git", "-C", str(wd), "clean", "-fd"]):
+        subprocess.run(cmd, check=True, capture_output=True)
+    patch = wd.parent.parent / "data" / "work" / f"{args.case}.patch"
+    patch.parent.mkdir(parents=True, exist_ok=True)
+    patch.write_text(diff, encoding="utf-8")
+    r = subprocess.run(["git", "-C", str(wd), "apply", "--whitespace=nowarn",
+                        str(patch)], capture_output=True, text=True)
+    if r.returncode != 0:
+        print(f"git apply failed: {r.stderr[:500]}", file=sys.stderr)
+        return 3
+    for cmd in (["git", "-C", str(wd), "add", "-A"],
+                ["git", "-C", str(wd), "-c", "user.name=docagent-bot",
+                 "-c", "user.email=bot@local", "commit", "-m",
+                 f"test: seed {args.case} ({case.get('category', '')})"],
+                ["git", "-C", str(wd), "push", "--force", token_url,
+                 f"HEAD:refs/heads/{branch}"]):
+        subprocess.run(cmd, check=True, capture_output=True)
+
+    title = f"Test PR: {args.case} — {(case.get('code_change') or {}).get('summary', '')[:60]}"
+    body = (f"seeded from gold/{args.case}\n\n"
+            f"category: {case.get('category')}\n"
+            f"expected_behavior: {(case.get('expected_behavior') or {}).get('behavior') if isinstance(case.get('expected_behavior'), dict) else case.get('expected_behavior')}")
+    try:
+        pr = c.open_draft_pr(slug, branch, title, body)
+    except Exception as e:
+        m = _re.search(r"already exists.*?#(\d+)", str(e))
+        pr = {"number": int(m.group(1)), "html_url": f"(existing #{m.group(1)})"} \
+            if m else {"error": str(e)[:200]}
+    print(json.dumps({"branch": branch, **pr}, ensure_ascii=False, indent=2))
     return 0
 
 
@@ -83,6 +146,11 @@ def main(argv=None):
     p.add_argument("--repo", required=True)
     p.add_argument("--dry-run", action="store_true")
     p.set_defaults(fn=cmd_bootstrap)
+
+    p = sub.add_parser("seed-pr", help="тестовый PR из gold-кейса в демо-репо")
+    p.add_argument("--repo", default="Reactivity512/python-demo-repo")
+    p.add_argument("--case", required=True, help="id кейса, напр. gold-045")
+    p.set_defaults(fn=cmd_seed_pr)
 
     p = sub.add_parser("diff", help="гибридный read: diff+клон+анализ правил")
     p.add_argument("--repo", required=True)

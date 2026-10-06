@@ -254,3 +254,44 @@ def test_publish_updates_existing_branch_pr():
     res = publisher.publish_to_github(state, s, client=C())
     assert captured["parent"] == "branchhead123"   # parent = HEAD ветки, не main
     assert res["updated"] is True and res["pr_number"] == 42
+
+
+def test_repo_slug_windows_path_falls_back_to_demo():
+    """F:\\...\\file.diff — это путь, не owner/repo: fallback на demo_repo."""
+    from docagent.config import get_settings
+    from docagent.github_int.publisher import _repo_slug
+    s = get_settings()
+    assert _repo_slug({"pr_ref": "F:\\!prog_new\\x-pr7.diff"}, s) == s.demo_repo
+    assert _repo_slug({"pr_ref": "/tmp/x/y.diff"}, s) == s.demo_repo
+    # реальные slug'ы парсятся как раньше
+    assert _repo_slug({"pr_ref": "https://github.com/o/r/pull/7"}, s) == "o/r"
+    assert _repo_slug({"pr_ref": "o/r#7"}, s) == "o/r"
+
+
+def test_ensure_branch_at_creates_and_resets(fake_gh=None):
+    """ensure_branch_at: 404 -> create_git_ref, иначе edit(force)."""
+    import types
+    from github import GithubException
+
+    from docagent.github_int.client import GitHubClient
+
+    calls = []
+
+    class Ref:
+        object = types.SimpleNamespace(sha="aaa")
+        def edit(self, sha, force=False): calls.append(("edit", sha, force))
+
+    class RepoExists:
+        def get_git_ref(self, path): return Ref()
+
+    class RepoMissing:
+        def get_git_ref(self, path): raise GithubException(404, {}, None)
+        def create_git_ref(self, ref, sha): calls.append(("create", ref, sha))
+
+    c = GitHubClient.__new__(GitHubClient)  # без токена: тест только логику ref'а
+    c.repo = lambda slug: RepoExists()
+    GitHubClient.ensure_branch_at(c, "o/r", "b", "bbb")
+    assert calls[-1] == ("edit", "bbb", True)
+    c.repo = lambda slug: RepoMissing()
+    GitHubClient.ensure_branch_at(c, "o/r", "b", "ccc")
+    assert calls[-1] == ("create", "refs/heads/b", "ccc")
