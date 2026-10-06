@@ -176,7 +176,7 @@ def plan_bootstrap(client: GitHubClient, slug: str) -> list[dict]:
     plan = []
     for path, content in FILES.items():
         try:
-            repo.get_content(path)
+            repo.get_contents(path)
             continue  # уже есть — не трогаем
         except GithubException as e:
             if e.status != 404:
