@@ -1,1 +1,6 @@
-(empty)
+# Python compiled files and caches
+__pycache__/
+*.pyc
+
+# Data and database artifacts (if generated)
+data/checkpoints.db
